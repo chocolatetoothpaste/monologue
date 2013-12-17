@@ -1,0 +1,17 @@
+{
+	"name": "monologue",
+	"version": "0.0.1",
+	"description": "",
+	"main": "./monologue.js",
+	"author": {
+		"name": "Ross Paskett",
+		"email": "ross@pasket.me"
+	},
+	"keywords": [
+		"mysql", "query"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git://github.com/chocolatetoothpaste/monologue"
+	}
+}
