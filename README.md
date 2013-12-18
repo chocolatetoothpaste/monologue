@@ -16,13 +16,13 @@ This was ported from a PHP library, and uses named parameters for binding. Some 
         .where( "id" ).in([1,2,3,4,5,6,6,6,6,6])
         .where('date_time').between( '2012-09-12', '2013-01-20')
         .group('type')
-        .where( "name" ).like("ro") // out of order
+        .where( "name", "OR" ).like("ro") // out of order, also passing "OR" as separator
         .order("id")
         .limit('300', 1000)
 
     var query = mono.query();
 
-    console.log( query ); // output: SELECT * FROM users WHERE id IN (:__in_1,:__in_2,:__in_3,:__in_4,:__in_5,:__in_6) AND date_time BETWEEN :__between_8_20120912 AND :__between_8_20130121 AND name LIKE :__like_ro GROUP BY type ASC ORDER BY id ASC LIMIT 1000, 300
+    console.log( query ); // output: SELECT * FROM users WHERE id IN (:__in_1,:__in_2,:__in_3,:__in_4,:__in_5,:__in_6) AND date_time BETWEEN :__between_8_20120912 AND :__between_8_20130121 OR name LIKE :__like_ro GROUP BY type ASC ORDER BY id ASC LIMIT 1000, 300
 
     console.log( mono.params );
     /* output: Automatically reduces duplicates!
