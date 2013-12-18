@@ -41,7 +41,7 @@
 		separator = ( typeof separator === "undefined" ? "AND" : separator );
 
 		if( typeof w !== "string" ) {
-			var criteria = this.make(w);
+			var criteria = this.stringify(w);
 
 			// stringify the where statements
 			w = criteria.join( " " + separator + " " );
@@ -63,7 +63,7 @@
 		separator = ( typeof separator === "undefined" ? "AND" : separator );
 
 		if( typeof h !== "string" ) {
-			var criteria = this.make(h);
+			var criteria = this.stringify(h);
 
 			// stringify the having statements
 			h = criteria.join( " " + separator + " " );
@@ -83,7 +83,8 @@
 
 	Monologue.prototype.in = function( ins )
 	{
-		var i = this.make(ins, '', '__in_');
+		var i = this.stringify(ins, '', '__in_');
+
 		i = i.join(",");
 
 		// returns "this"
@@ -103,14 +104,15 @@
 			// 	this.params[l] = like[k];
 			// 	like[l] = k + " LIKE :" + l;
 			// }
-			// like = this.make( like, "LIKE", "__like_" );
+			// like = this.stringify( like, "LIKE", "__like_" );
 			// console.log(like);
 			// like = "(" + like.join( " " + separator + " " ) + ")";
 		// }
 
 		// else {
-			this.params["__like_" + like] = like;
-			like = "LIKE :__like_" + like.replace(rx, '');
+			var k = "__like_" + like.replace(rx, '');
+			this.params[k] = like;
+			like = "LIKE :" + k;
 		// }
 
 		return this.where( like, "" );
@@ -122,15 +124,9 @@
 
 	Monologue.prototype.between = function( one, two )
 	{
-		// a unique id of some kind is required to dsitinguish fields, so a md5
-		// hash of the current where clause should give one each time
-		var k = "__between_" + Math.floor(Math.random() * 10) + "_";
-
-		// replace non-alpha-numeric (plus underscore) characters in the values
-		// and use those as part of the unique field name (otherwise there the
-		// values would collide)
-		var k1 = k + one.replace( rx, '' );
-		var k2 = k + two.replace( rx, '' );
+		// create unique field names for each value
+		var k1 = "__between_" + one.replace(rx, "");
+		var k2 = "__between_" + two.replace(rx, "");
 
 		this.params[k1] = one;
 		this.params[k2] = two;
@@ -260,7 +256,7 @@
 
 	Monologue.prototype.update = function( table, params ) {
 		if( typeof params !== "string" ) {
-			var columns = this.make(params);
+			var columns = this.stringify(params);
 			columns = " SET " + columns.join( ', ' );
 		}
 
@@ -291,15 +287,21 @@
 	/**
 	 */
 
-	Monologue.prototype.make = function( params, sep, pref ) {
+	Monologue.prototype.stringify = function( params, sep, pref ) {
 		sep = ( sep.length > 0 ? sep : '' );
 		pref = pref || '';
-		var index = 0, columns = [];
+		var columns = [],
+			arr = ( toString.call(params) === "[object Array]" ? true : false );
+
+		// params = params.filter( function(v, pos) { return params.indexOf( v ) == pos } );
 
 		for( k in params ) {
-			++index;
-			var i = pref + index;
-			columns.push( ( sep.length > 0 ? k + " " + sep : '' ) + " :" + i );
+			var i = pref + params[k].toString().replace(rx, "");
+			var v = ( sep.length > 0 ? k + " " + sep : '' ) + " :" + i;
+
+			if( columns.indexOf( v ) === -1 )
+				columns.push( v );
+
 			this.params[i] = params[k];
 		}
 
