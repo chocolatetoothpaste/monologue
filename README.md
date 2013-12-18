@@ -2,9 +2,11 @@ Monologue - Streamlined query building
 ======================================
 
 **Install**
+
     npm install monologue
 
 **Usage**
+
 This was ported from a PHP library, and uses named parameters for binding. Some mysql packages in node support this, see their documentation for examples. This package will continue to evolve and support other methods in the future.
 
     var mono = require('monologue');
