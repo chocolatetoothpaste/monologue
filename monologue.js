@@ -10,25 +10,23 @@
 			limit: ''
 		};
 
-	function Query() {
+	function Monologue() {
 		this.params = {};
 	};
 
 	if( typeof module !== "undefined" && module.exports ) {
-		module.exports = new Query;
+		module.exports = new Monologue;
 	}
-
 	else {
-		root.mono = new Query;
+		root.monologue = new Monologue;
 	}
-
 
 	/**
 	 * Creates a select statement using properties defined before calling method
 	 * @return string	the generated query string
 	 */
 
-	Query.prototype.select = function( c, t ) {
+	Monologue.prototype.select = function( c, t ) {
 		c = ( typeof c === "string" ? c : c.join(", ") );
 
 		yoe.query = "SELECT " + c + " FROM " + t;
@@ -36,7 +34,7 @@
 		return this;
 	}
 
-	Query.prototype.where = function( w, separator ) {
+	Monologue.prototype.where = function( w, separator ) {
 		separator = ( typeof separator === "undefined" ? "AND" : separator );
 
 		if( typeof w !== "string" ) {
@@ -60,7 +58,7 @@
 		return this;
 	}
 
-	Query.prototype.having = function( h, separator ) {
+	Monologue.prototype.having = function( h, separator ) {
 		separator = ( typeof separator === "undefined" ? "AND" : separator );
 
 		if( typeof h !== "string" ) {
@@ -84,7 +82,7 @@
 		return this;
 	}
 
-	Query.prototype.in = function( ins )
+	Monologue.prototype.in = function( ins )
 	{
 		i = [];
 
@@ -102,7 +100,7 @@
 		return this.where( "IN (" + i + ")", "" );
 	}
 
-	Query.prototype.like = function( like, separator ) {
+	Monologue.prototype.like = function( like, separator ) {
 		separator = separator || "AND";
 
 		if( typeof like !== "string" ) {
@@ -123,7 +121,7 @@
 		return this.where( like, "" );
 	}
 
-	Query.prototype.between = function( one, two )
+	Monologue.prototype.between = function( one, two )
 	{
 		// a unique id of some kind is required to dsitinguish fields, so a md5
 		// hash of the current where clause should give one each time
@@ -146,7 +144,7 @@
 	}
 
 	// group, direction
-	Query.prototype.group = function( g, d ) {
+	Monologue.prototype.group = function( g, d ) {
 		d = d || 'ASC';
 
 		if( typeof g !== "string" )
@@ -158,7 +156,7 @@
 	}
 
 	// order, direction
-	Query.prototype.order = function( o, d ) {
+	Monologue.prototype.order = function( o, d ) {
 		d = d || 'ASC';
 
 		if( typeof o !== "string" )
@@ -170,7 +168,7 @@
 	}
 
 	// limit, offset
-	Query.prototype.limit = function( l, o )
+	Monologue.prototype.limit = function( l, o )
 	{
 		yoe.limit = ( typeof o === "undefined" ? l : o + ", " + l );
 		return this;
@@ -181,7 +179,7 @@
 	 * Compile each part together and generate a valid SQL statement
 	 */
 
-	Query.prototype.query = function()
+	Monologue.prototype.query = function()
 	{
 		if( yoe.where.length > 0 )
 			yoe.query = yoe.query + " WHERE " + yoe.where;
@@ -207,7 +205,7 @@
 	 * @return string
 	 */
 
-	// Query.prototype.insert = function( $table, array $params )
+	// Monologue.prototype.insert = function( $table, array $params )
 	// {
 	// 	$columns = array();
 	// 	$multi = ( count( $params ) != count( $params, COUNT_RECURSIVE ) );
@@ -264,24 +262,60 @@
 	 * @return string
 	 */
 
-	Query.prototype.update = function( table, params ) {
+	Monologue.prototype.insert = function( table, params ) {
 		if( typeof params !== "string" ) {
-			this.params = params;
-			var columns = [];
+			// if( toString.call(params) === "[object Array]" ) { }
+			var columns = [], values = [];
 
-			params.map( function( v, k ) {
-				k = k.replace( rx, '' );
-				columns.push( k + " = :" + k )
-			});
+			for( k in params ) {
+				var p = k.replace( rx, '' );
+				this.params[p] = params[k];
+				columns.push( k );
+				values.push( ":" + p );
+			}
 
 			columns = columns.join( ', ' );
+			values = values.join( ', ' );
+
+			columns = "  (" + columns + ") VALUES " + "(" + values + ")";
 		}
 
 		else {
-			columns = params;
+			var columns = " " + params;
 		}
 
-		this.query = "UPDATE " + table + " SET " + columns;
+		this.query = "INSERT INTO " + table + columns;
+
+		return this;
+	};
+
+
+	/**
+	 * Generates an update statement
+	 * @param string $table
+	 * @param array $params
+	 * @param array $where
+	 * @return string
+	 */
+
+	Monologue.prototype.update = function( table, params ) {
+		if( typeof params !== "string" ) {
+			var columns = [];
+
+			for( k in params ) {
+				var p = k.replace( rx, '' );
+				columns.push( k + " = :" + p );
+				this.params[p] = params[k];
+			}
+
+			columns = " SET " + columns.join( ', ' );
+		}
+
+		else {
+			columns = " " + params;
+		}
+
+		this.query = "UPDATE " + table + columns;
 
 		return this;
 	};
@@ -292,7 +326,7 @@
 	 * @return string	the generated query string
 	 */
 
-	Query.prototype.delete = function( t )
+	Monologue.prototype.delete = function( t )
 	{
 		yoe.table = t;
 		yoe.query = "DELETE FROM " + yoe.table;
