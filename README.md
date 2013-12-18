@@ -22,6 +22,8 @@ This was ported from a PHP library, and uses named parameters for binding. Some 
 
     var query = mono.query();
 
+    // Now pass mono.query (or the var you assign, see above) and mono.params into your MySQL querying function!
+
     console.log( query ); // output: SELECT * FROM users WHERE id IN (:__in_1,:__in_2,:__in_3,:__in_4,:__in_5,:__in_6) AND date_time BETWEEN :__between_8_20120912 AND :__between_8_20130121 OR name LIKE :__like_ro GROUP BY type ASC ORDER BY id ASC LIMIT 1000, 300
 
     console.log( mono.params );

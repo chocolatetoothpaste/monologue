@@ -264,20 +264,43 @@
 
 	Monologue.prototype.insert = function( table, params ) {
 		if( typeof params !== "string" ) {
-			// if( toString.call(params) === "[object Array]" ) { }
-			var columns = [], values = [];
+			var columns = [], values = [], index = 0;
 
-			for( k in params ) {
-				var p = k.replace( rx, '' );
-				this.params[p] = params[k];
-				columns.push( k );
-				values.push( ":" + p );
+			var itr = (function( i ) {
+				var v = [], c = [];
+				index++;
+
+				for( k in i ) {
+					var p = k.replace( rx, '' ) + index;
+					this.params[p] = i[k];
+
+					if( columns.length === 0 )
+						c.push( k );
+
+					v.push( ":" + p );
+				}
+
+				if( columns.length === 0 )
+					columns.push(c);
+
+				values.push(v);
+
+			}).bind(this);
+
+			if( toString.call(params) === "[object Array]" ) {
+				for( p in params )
+					itr(params[p]);
+			}
+			else {
+				itr(params);
 			}
 
-			columns = columns.join( ', ' );
-			values = values.join( ', ' );
+			for( v in values ) {
+				values[v] = "(" + values[v].join(',') + ")";
+			}
 
-			columns = "  (" + columns + ") VALUES " + "(" + values + ")";
+			columns = "  (" + columns.join(', ') + ") VALUES " + values.join(',');
+
 		}
 
 		else {
