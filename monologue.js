@@ -41,13 +41,7 @@
 		separator = ( typeof separator === "undefined" ? "AND" : separator );
 
 		if( typeof w !== "string" ) {
-			criteria = [];
-
-			for( k in w ) {
-				k = k.replace( rx, '' );
-				this.params[k] = w[k];
-				criteria.push( k + " = :" + k );
-			}
+			var criteria = this.make(w);
 
 			// stringify the where statements
 			w = criteria.join( " " + separator + " " );
@@ -69,13 +63,7 @@
 		separator = ( typeof separator === "undefined" ? "AND" : separator );
 
 		if( typeof h !== "string" ) {
-			criteria = [];
-
-			for( k in h ) {
-				k = k.replace( rx, '' );
-				this.params[k] = h[k];
-				criteria.push( k + " = :" + k );
-			}
+			var criteria = this.make(h);
 
 			// stringify the having statements
 			h = criteria.join( " " + separator + " " );
@@ -95,16 +83,7 @@
 
 	Monologue.prototype.in = function( ins )
 	{
-		i = [];
-
-		ins.map( function( v ) {
-			var k = "__in_" + v;
-			if( typeof this.params[k] === "undefined" ) {
-				this.params[k] = v;
-				i.push( ":" + k );
-			}
-		}.bind(this));
-
+		var i = this.make(ins, '', '__in_');
 		i = i.join(",");
 
 		// returns "this"
@@ -118,20 +97,21 @@
 	Monologue.prototype.like = function( like, separator ) {
 		separator = separator || "AND";
 
-		if( typeof like !== "string" ) {
-			like.map( function( v, k ) {
-				var l = "__like_" + k.replace( rx, '' );
-				this.params[l] = "%" + v + "%";
-				like[l] = k + " LIKE :" + l;
-			});
+		// if( typeof like !== "string" ) {
+			// for( k in like ) {
+			// 	var l = "__like_" + k;
+			// 	this.params[l] = like[k];
+			// 	like[l] = k + " LIKE :" + l;
+			// }
+			// like = this.make( like, "LIKE", "__like_" );
+			// console.log(like);
+			// like = "(" + like.join( " " + separator + " " ) + ")";
+		// }
 
-			like = "(" + like.join( " " + separator + " " ) + ")";
-		}
-
-		else {
-			this.params["__like_" + like] = "%" + like + "%";
-			like = "LIKE :__like_" + like;
-		}
+		// else {
+			this.params["__like_" + like] = like;
+			like = "LIKE :__like_" + like.replace(rx, '');
+		// }
 
 		return this.where( like, "" );
 	}
@@ -144,17 +124,13 @@
 	{
 		// a unique id of some kind is required to dsitinguish fields, so a md5
 		// hash of the current where clause should give one each time
-		// $column = md5( this.where );
-		column = Math.floor(Math.random() * 10);
-		var k = "__between_" + column + "_";
+		var k = "__between_" + Math.floor(Math.random() * 10) + "_";
 
 		// replace non-alpha-numeric (plus underscore) characters in the values
 		// and use those as part of the unique field name (otherwise there the
 		// values would collide)
 		var k1 = k + one.replace( rx, '' );
 		var k2 = k + two.replace( rx, '' );
-		// $k1 = preg_replace('#[^a-zA-Z0-9_]#', '', "{$k}{$one}");
-		// $k2 = preg_replace('#[^a-zA-Z0-9_]#', '',"{$k}{$two}");
 
 		this.params[k1] = one;
 		this.params[k2] = two;
@@ -170,8 +146,7 @@
 	Monologue.prototype.group = function( g, d ) {
 		d = d || 'ASC';
 
-		if( typeof g !== "string" )
-			g = g.join( ',' );
+		if( typeof g !== "string" ) g = g.join( ',' );
 
 		qparts.group.push( g + " " + d );
 
@@ -186,8 +161,7 @@
 	Monologue.prototype.order = function( o, d ) {
 		d = d || 'ASC';
 
-		if( typeof o !== "string" )
-			o = o.join( ',' );
+		if( typeof o !== "string" ) o = o.join( ',' );
 
 		qparts.order.push( o + " " + d );
 
@@ -239,7 +213,7 @@
 				index++;
 
 				for( k in i ) {
-					var p = k.replace( rx, '' ) + index;
+					var p = k + index;
 					this.params[p] = i[k];
 
 					if( columns.length === 0 )
@@ -286,19 +260,12 @@
 
 	Monologue.prototype.update = function( table, params ) {
 		if( typeof params !== "string" ) {
-			var columns = [];
-
-			for( k in params ) {
-				var p = k.replace( rx, '' );
-				columns.push( k + " = :" + p );
-				this.params[p] = params[k];
-			}
-
+			var columns = this.make(params);
 			columns = " SET " + columns.join( ', ' );
 		}
 
 		else {
-			columns = " " + params;
+			var columns = " " + params;
 		}
 
 		qparts.query = "UPDATE " + table + columns;
@@ -319,4 +286,23 @@
 
 		return this;
 	};
+
+
+	/**
+	 */
+
+	Monologue.prototype.make = function( params, sep, pref ) {
+		sep = ( sep.length > 0 ? sep : '' );
+		pref = pref || '';
+		var index = 0, columns = [];
+
+		for( k in params ) {
+			++index;
+			var i = pref + index;
+			columns.push( ( sep.length > 0 ? k + " " + sep : '' ) + " :" + i );
+			this.params[i] = params[k];
+		}
+
+		return columns;
+	}
 })();
