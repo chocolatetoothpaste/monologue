@@ -14,7 +14,13 @@
 		this.params = {};
 	};
 
-	root.mono = new Query;
+	if( typeof module !== "undefined" && module.exports ) {
+		module.exports = new Query;
+	}
+
+	else {
+		root.mono = new Query;
+	}
 
 
 	/**
