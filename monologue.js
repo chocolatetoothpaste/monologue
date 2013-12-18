@@ -14,7 +14,6 @@
 		this.params = {};
 	};
 
-
 	root.mono = new Query;
 
 
@@ -85,9 +84,11 @@
 
 		ins.map( function( v ) {
 			var k = "__in_" + v;
-			// this.params[k] = v;
-			i.push( ":" + k );
-		});
+			if( typeof this.params[k] === "undefined" ) {
+				this.params[k] = v;
+				i.push( ":" + k );
+			}
+		}.bind(this));
 
 		i = i.join(",");
 
