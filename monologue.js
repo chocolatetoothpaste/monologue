@@ -38,6 +38,11 @@
 	 */
 
 	Monologue.prototype.where = function( w, separator ) {
+		// if( typeof separator === "undefined" ) {
+		// 	separator = opt;
+		// 	opt = null;
+		// }
+
 		separator = ( typeof separator === "undefined" ? "AND" : separator );
 
 		if( typeof w !== "string" ) {
@@ -81,14 +86,14 @@
 	/**
 	 */
 
-	Monologue.prototype.in = function( ins )
-	{
+	Monologue.prototype.in = function( ins, field ) {
+		field = field || "";
 		var i = this.stringify(ins, '', '__in_');
 
 		i = i.join(",");
 
 		// returns "this"
-		return this.where( "IN (" + i + ")", "" );
+		return this.where( field + " IN (" + i + ")", "" );
 	}
 
 
@@ -204,40 +209,45 @@
 		if( typeof params !== "string" ) {
 			var columns = [], values = [], index = 0;
 
-			var itr = (function( i ) {
-				var v = [], c = [];
-				index++;
+			// var itr = (function( i ) {
+			// 	var v = [], c = [];
+			// 	index++;
 
-				for( k in i ) {
-					var p = k + index;
-					this.params[p] = i[k];
+			// 	for( k in i ) {
+			// 		var p = k + index;
+			// 		this.params[p] = i[k];
 
-					if( columns.length === 0 )
-						c.push( k );
+			// 		if( columns.length === 0 )
+			// 			c.push( k );
 
-					v.push( ":" + p );
-				}
+			// 		v.push( ":" + p );
+			// 	}
 
-				if( columns.length === 0 )
-					columns.push(c);
+			// 	if( columns.length === 0 )
+			// 		columns.push(c);
 
-				values.push(v);
+			// 	values.push(v);
 
-			}).bind(this);
+			// }).bind(this);
 
-			if( toString.call(params) === "[object Array]" ) {
-				for( p in params )
-					itr(params[p]);
+			if( toString.call(params) !== "[object Array]" ) {
+				params = [params];
+				// values = this.stringify( params, "" ).join(",");
 			}
-			else {
-				itr(params);
-			}
+			// else {
 
-			for( v in values ) {
-				values[v] = "(" + values[v].join(',') + ")";
-			}
+			// 	// values = this.stringify(params, "");
+			// 	// console.log(values);
+			// }
 
-			columns = " (" + columns.join(', ') + ") VALUES " + values.join(',');
+			values = this.stringify( params, "").join(",");
+
+
+			// for( v in values ) {
+				// values[v] = "(" + values[v].join(',') + ")";
+			// }
+
+			columns = " (" + columns.join(', ') + ") VALUES " + values;
 
 		}
 
@@ -276,35 +286,38 @@
 	Monologue.prototype.delete = function( table, where )
 	{
 		qparts.query = "DELETE FROM " + table;
-
-		if( where )
-			this.where(where);
-
-		return this;
+		return ( where ? this.where( where ) : this );
 	};
 
 
 	/**
 	 */
 
-	Monologue.prototype.stringify = function( params, sep, pref ) {
-		sep = ( sep.length > 0 ? sep : '' );
-		pref = pref || '';
-		var columns = [],
-			arr = ( toString.call(params) === "[object Array]" ? true : false );
-
-		// params = params.filter( function(v, pos) { return params.indexOf( v ) == pos } );
+	Monologue.prototype.stringify = function( params, sep, pre ) {
+		sep = ( typeof sep !== "undefined" ? sep : '=' );
+		pre = pre || '__eq_';
+		var columns = [];
 
 		for( k in params ) {
-			var i = pref + params[k].toString().replace(rx, "");
-			var v = ( sep.length > 0 ? k + " " + sep : '' ) + " :" + i;
+			// if value is an array, it must be an IN() statement
+			if( toString.call( params ) === "[object Array]" ) {
+				columns.push( "(" + this.stringify( params[k], "" ) + ")");
+			}
 
-			if( columns.indexOf( v ) === -1 )
+			else if( toString.call( params[k] ) === "[object Array]" ) {
+				v = this.where( k ).in( params[k] );
+			}
+
+			else {
+				var i = pre + params[k].toString().replace(rx, "");
+				var v = ( sep.length > 0 ? k + " " + sep : '' ) + " :" + i;
+				this.params[i] = params[k];
+
 				columns.push( v );
-
-			this.params[i] = params[k];
+			}
 		}
 
-		return columns;
+		if( columns.length > 0 )
+			return columns;
 	}
 })();
