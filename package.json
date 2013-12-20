@@ -1,6 +1,6 @@
 {
 	"name": "monologue",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Streamlined MySQL query building",
 	"main": "./monologue.js",
 	"author": {
