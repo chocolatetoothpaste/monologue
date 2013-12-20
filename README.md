@@ -1,7 +1,8 @@
 Monologue - Streamlined query building
 ======================================
 
-### Behavior of Monologue.like() was changed slightly, see examples below.  It will no longer add "%" for you, you can add it wherever you want.
+### BREAKING CHANGE: monologue.query() will no longer return the query string, it will return "this".  monologue.sql will now have the compiled query, and monolouge.params will have your param values (no change)
+### Behavior of monologue.like() was changed slightly, see examples below.  It will no longer add "%" for you, you can add it wherever you want.
 #### Monologue won't attempt to remove duplicates. It was problematic and opens the door to buggy output. Reduce your values sets before passing
 
 **Install**

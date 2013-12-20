@@ -11,8 +11,12 @@
 		};
 
 	function Monologue() {
-		this.params = {};
+		this.params = {}, this.sql = '';
 	};
+
+	function monologue() {
+		return new Monologue;
+	}
 
 	if( typeof module !== "undefined" && module.exports ) {
 		module.exports = new Monologue;
@@ -26,6 +30,8 @@
 	 */
 
 	Monologue.prototype.select = function( c, t ) {
+		this.params = {};
+
 		c = ( typeof c === "string" ? c : c.join(", ") );
 
 		qparts.query = "SELECT " + c + " FROM " + t;
@@ -37,24 +43,91 @@
 	/**
 	 */
 
-	Monologue.prototype.where = function( w, separator ) {
-		// if( typeof separator === "undefined" ) {
-		// 	separator = opt;
-		// 	opt = null;
-		// }
+	Monologue.prototype.insert = function( table, params ) {
+		this.params = {};
 
-		separator = ( typeof separator === "undefined" ? "AND" : separator );
+		// I don't know why this would ever NOT be ther case
+		if( typeof params === "object" ) {
+			var columns = [], values = [], index = 0;
 
-		if( typeof w !== "string" ) {
-			var criteria = this.stringify(w);
+			// if it's not a multidimensional array, cheat and make it one
+			if( toString.call(params) !== "[object Array]" ) {
+				params = [params];
+			}
+
+			columns = this.stringify( params, "");
+			columns = " (" + columns.shift() + ") VALUES " + columns.join(',');
+
+		}
+
+		else if( typeof params === "string" ) {
+			var columns = " " + params;
+		}
+		else {
+			// emit error
+		}
+
+		qparts.query = "INSERT INTO " + table + columns;
+
+		return this;
+	};
+
+
+	/**
+	 */
+
+	Monologue.prototype.update = function( table, params ) {
+		this.params = {};
+
+		if( typeof params === "object" ) {
+			var columns = this.stringify(params);
+			columns = " SET " + columns.join( ', ' );
+		}
+
+		else if( typeof params === "string" ) {
+			var columns = " " + params;
+		}
+
+		else {
+			// throw error
+		}
+
+		qparts.query = "UPDATE " + table + columns;
+
+		return this;
+	};
+
+
+	/**
+	 */
+
+	Monologue.prototype.delete = function( table, where )
+	{
+		this.params = {};
+
+		qparts.query = "DELETE FROM " + table;
+		return ( where ? this.where( where ) : this );
+	};
+
+
+	/**
+	 * w: where statement, s: separator
+	 */
+
+	Monologue.prototype.where = function( w, s ) {
+		s = ( typeof s === "undefined" ? "AND" : s );
+		s = ( s.length > 0 ? " " + s + " " : s );
+
+		if( toString.call( w ) === "[object Object]" ) {
+			var criteria = this.stringify( w );
 
 			// stringify the where statements
-			w = criteria.join( " " + separator + " " );
+			w = criteria.join( s );
 		}
 
 		// check if a previous where statement has been set and glue it all together
 		qparts.where = ( qparts.where.length > 0
-			? qparts.where + " " + separator + " " + w
+			? qparts.where + s + w
 			: w );
 
 		return this;
@@ -88,12 +161,12 @@
 
 	Monologue.prototype.in = function( ins, field ) {
 		field = field || "";
-		var i = this.stringify(ins, '', '__in_');
+		var i = this.stringify( [ins], '', '__in_');
 
 		i = i.join(",");
 
 		// returns "this"
-		return this.where( field + " IN (" + i + ")", "" );
+		return this.where( i, "" );
 	}
 
 
@@ -103,22 +176,11 @@
 	Monologue.prototype.like = function( like, separator ) {
 		separator = separator || "AND";
 
-		// if( typeof like !== "string" ) {
-			// for( k in like ) {
-			// 	var l = "__like_" + k;
-			// 	this.params[l] = like[k];
-			// 	like[l] = k + " LIKE :" + l;
-			// }
-			// like = this.stringify( like, "LIKE", "__like_" );
-			// console.log(like);
-			// like = "(" + like.join( " " + separator + " " ) + ")";
-		// }
-
-		// else {
-			var k = "__like_" + like.replace(rx, '');
-			this.params[k] = like;
-			like = "LIKE :" + k;
-		// }
+		// calling this.where() will take of stringifying, so gluing the
+		// statement together is all that needs to be done here
+		var k = "__like_" + like.replace(rx, '');
+		this.params[k] = like;
+		like = " LIKE :" + k;
 
 		return this.where( like, "" );
 	}
@@ -198,126 +260,51 @@
 		if( qparts.limit.length > 0 )
 			qparts.query += " LIMIT " + qparts.limit;
 
-		return qparts.query;
+		this.sql = qparts.query;
+
+		return this;
 	}
 
 
 	/**
+	 * s: serator
 	 */
 
-	Monologue.prototype.insert = function( table, params ) {
-		if( typeof params !== "string" ) {
-			var columns = [], values = [], index = 0;
-
-			// var itr = (function( i ) {
-			// 	var v = [], c = [];
-			// 	index++;
-
-			// 	for( k in i ) {
-			// 		var p = k + index;
-			// 		this.params[p] = i[k];
-
-			// 		if( columns.length === 0 )
-			// 			c.push( k );
-
-			// 		v.push( ":" + p );
-			// 	}
-
-			// 	if( columns.length === 0 )
-			// 		columns.push(c);
-
-			// 	values.push(v);
-
-			// }).bind(this);
-
-			if( toString.call(params) !== "[object Array]" ) {
-				params = [params];
-				// values = this.stringify( params, "" ).join(",");
-			}
-			// else {
-
-			// 	// values = this.stringify(params, "");
-			// 	// console.log(values);
-			// }
-
-			values = this.stringify( params, "").join(",");
-
-
-			// for( v in values ) {
-				// values[v] = "(" + values[v].join(',') + ")";
-			// }
-
-			columns = " (" + columns.join(', ') + ") VALUES " + values;
-
-		}
-
-		else {
-			var columns = " " + params;
-		}
-
-		qparts.query = "INSERT INTO " + table + columns;
-
-		return this;
-	};
-
-
-	/**
-	 */
-
-	Monologue.prototype.update = function( table, params ) {
-		if( typeof params !== "string" ) {
-			var columns = this.stringify(params);
-			columns = " SET " + columns.join( ', ' );
-		}
-
-		else {
-			var columns = " " + params;
-		}
-
-		qparts.query = "UPDATE " + table + columns;
-
-		return this;
-	};
-
-
-	/**
-	 */
-
-	Monologue.prototype.delete = function( table, where )
-	{
-		qparts.query = "DELETE FROM " + table;
-		return ( where ? this.where( where ) : this );
-	};
-
-
-	/**
-	 */
-
-	Monologue.prototype.stringify = function( params, sep, pre ) {
-		sep = ( typeof sep !== "undefined" ? sep : '=' );
+	Monologue.prototype.stringify = function( params, s, pre ) {
+		s = ( typeof s === "undefined" ? "=" : s );
 		pre = pre || '__eq_';
-		var columns = [];
+		var columns = [],
+			collection = (toString.call( params ) === "[object Array]");
 
 		for( k in params ) {
-			// if value is an array, it must be an IN() statement
-			if( toString.call( params ) === "[object Array]" ) {
+			// if an array of numbers, easily assumed to be an "IN" statment
+			// time will tell if this is true
+			if( toString.call( params[k] ) === "[object Array]" ) {
+				columns.push( ( collection ? "" : k )
+					+ " IN (" + this.stringify( params[k], "", "__in_") + ")" );
+			}
+
+			// if it's an object, then it's an array of objects so it would be
+			// an insert statement
+			else if( toString.call( params[k] ) === "[object Object]" ) {
+				// if columns is empty, then push the actual column names first
+				if( columns.length === 0 ) {
+					columns.push( Object.keys( params[k] ) );
+				}
+
 				columns.push( "(" + this.stringify( params[k], "" ) + ")");
 			}
 
-			else if( toString.call( params[k] ) === "[object Array]" ) {
-				v = this.where( k ).in( params[k] );
-			}
-
+			// actual stringification
 			else {
 				var i = pre + params[k].toString().replace(rx, "");
-				var v = ( sep.length > 0 ? k + " " + sep : '' ) + " :" + i;
+				var v = ( s.length > 0 ? k + " " + s + " " : '' ) + ":" + i;
 				this.params[i] = params[k];
 
 				columns.push( v );
 			}
 		}
 
-		if( columns.length > 0 )
-			return columns;
+		return columns;
 	}
 })();
