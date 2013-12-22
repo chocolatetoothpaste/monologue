@@ -3,6 +3,7 @@
 		root = this,
 		qparts = {
 			query: '',
+			join: [],
 			where: '',
 			having: '',
 			order: [],
@@ -18,6 +19,7 @@
 	function monologue() {
 		qparts = {
 			query: '',
+			join: [],
 			where: '',
 			having: '',
 			order: [],
@@ -57,8 +59,24 @@
 	/**
 	 */
 
-	Monologue.prototype.left = function( t, f ) {
-		qparts.query += " LEFT JOIN " + t + " ON " + f;
+	Monologue.prototype.join = function( d, t, f ) {
+		if( typeof f === "undefined" ) {
+			f = t;
+			t = d;
+			d = "LEFT";
+		}
+
+		if( typeof f === "object" ) {
+			var fields = [];
+			for( var ii in f ) {
+				fields.push( ii + " = " + f[ii] );
+			}
+
+			f = fields.join(" AND ");
+		}
+
+		qparts.join.push( " " + d + " JOIN " + t + " ON " + f );
+
 		return this;
 	}
 
@@ -287,6 +305,8 @@
 
 	Monologue.prototype.query = function()
 	{
+		if( qparts.join.length > 0 )
+			qparts.query += qparts.join.join();
 		if( qparts.where.length > 0 )
 			qparts.query += " WHERE " + qparts.where;
 		if( qparts.group.length > 0 )
@@ -376,10 +396,11 @@
 
 		qparts = {
 			query: '',
+			join: [],
 			where: '',
+			group: [],
 			having: '',
 			order: [],
-			group: [],
 			limit: '',
 			last: ''
 		};
