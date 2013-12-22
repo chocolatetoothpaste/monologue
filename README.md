@@ -43,3 +43,29 @@ This was ported from a PHP library, and uses named parameters for binding (PDO l
             __like_roen: "ro%en"
         }
     */
+
+    // Insert, passing an array of objects
+    // output: INSERT INTO users (username,password,first_name) VALUES (:__eq_test,:__eq_1234,:__eq_me),(:__eq_example,:__eq_abcd,:__eq_rasta)
+
+    monologue.insert( 'users', [
+        { username: 'test', password: '1234', first_name: 'me' },
+        { username: 'example', password: 'abcd', first_name: "rasta" }
+    ] ).query().sql
+
+
+    // Insert, passing a single object
+    // output: INSERT INTO users (username,password,first_name) VALUES (:__eq_me,:__eq_abcd,:__eq_cubert)
+
+    monologue.insert( 'users', { username: 'me', password: 'abcd', first_name: "cubert" } ).query().sql
+
+
+    // Update
+    // output: UPDATE users SET username = :__eq_yoyo, email = :__eq_kay, love = :__eq_toby WHERE id = :__eq_23
+
+    monologue.update( "users", {username: "yoyo", email: 'kay', love: "toby"} ).where( {id: 23} ).query().sql
+
+
+    // Delete
+    // output: DELETE FROM users WHERE id = :__eq_23 AND username = :__eq_test AND password = :__eq_1234 AND first_name = :__eq_me
+
+    monologue.delete( 'users', { username: 'test', password: '1234', first_name: "me" } ).query().sql;

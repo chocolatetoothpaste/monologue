@@ -15,14 +15,24 @@
 	};
 
 	function monologue() {
+		qparts = {
+			query: '',
+			where: '',
+			having: '',
+			order: [],
+			group: [],
+			limit: ''
+		};
 		return new Monologue;
 	}
 
 	if( typeof module !== "undefined" && module.exports ) {
 		module.exports = new Monologue;
+		// module.exports = monologue;
 	}
 	else {
 		root.monologue = new Monologue;
+		// root.monologue = monologue;
 	}
 
 
@@ -30,7 +40,7 @@
 	 */
 
 	Monologue.prototype.select = function( c, t ) {
-		this.params = {};
+		this.reset();
 
 		c = ( typeof c === "string" ? c : c.join(", ") );
 
@@ -44,7 +54,7 @@
 	 */
 
 	Monologue.prototype.insert = function( table, params ) {
-		this.params = {};
+		this.reset();
 
 		// I don't know why this would ever NOT be ther case
 		if( typeof params === "object" ) {
@@ -56,8 +66,10 @@
 			}
 
 			columns = this.stringify( params, "");
-			columns = " (" + columns.shift() + ") VALUES " + columns.join(',');
 
+			// console.log(columns);
+			// columns = "VALUES " + columns.join();
+			columns = " (" + columns.shift() + ") VALUES " + columns.join(',');
 		}
 
 		else if( typeof params === "string" ) {
@@ -77,7 +89,7 @@
 	 */
 
 	Monologue.prototype.update = function( table, params ) {
-		this.params = {};
+		this.reset();
 
 		if( typeof params === "object" ) {
 			var columns = this.stringify(params);
@@ -103,7 +115,7 @@
 
 	Monologue.prototype.delete = function( table, where )
 	{
-		this.params = {};
+		this.reset();
 
 		qparts.query = "DELETE FROM " + table;
 		return ( where ? this.where( where ) : this );
@@ -117,6 +129,8 @@
 	Monologue.prototype.where = function( w, s ) {
 		s = ( typeof s === "undefined" ? "AND" : s );
 		s = ( s.length > 0 ? " " + s + " " : s );
+
+		// console.log(w)
 
 		if( toString.call( w ) === "[object Object]" ) {
 			var criteria = this.stringify( w );
@@ -163,7 +177,7 @@
 		field = field || "";
 		var i = this.stringify( [ins], '', '__in_');
 
-		i = i.join(",");
+		i = " IN (" + i.join(",") + ")";
 
 		// returns "this"
 		return this.where( i, "" );
@@ -274,37 +288,63 @@
 		s = ( typeof s === "undefined" ? "=" : s );
 		pre = pre || '__eq_';
 		var columns = [],
-			collection = (toString.call( params ) === "[object Array]");
+			type = toString.call( params );// === "[object Array]";
 
-		for( k in params ) {
-			// if an array of numbers, easily assumed to be an "IN" statment
-			// time will tell if this is true
-			if( toString.call( params[k] ) === "[object Array]" ) {
-				columns.push( ( collection ? "" : k )
-					+ " IN (" + this.stringify( params[k], "", "__in_") + ")" );
-			}
+		if( type === "[object Array]" ) {
+			for( var ii = 0, l = params.length; ii < l; ++ii ) {
+				if( toString.call( params[ii] ) === "[object Object]" ) {
+					// if columns is empty, then push the actual column names first
+					if( columns.length === 0 ) {
+						columns.push( Object.keys( params[ii] ) );
+					}
 
-			// if it's an object, then it's an array of objects so it would be
-			// an insert statement
-			else if( toString.call( params[k] ) === "[object Object]" ) {
-				// if columns is empty, then push the actual column names first
-				if( columns.length === 0 ) {
-					columns.push( Object.keys( params[k] ) );
+					columns.push( "(" + this.stringify( params[ii], "" ) + ")");
 				}
-
-				columns.push( "(" + this.stringify( params[k], "" ) + ")");
-			}
-
-			// actual stringification
-			else {
-				var i = pre + params[k].toString().replace(rx, "");
-				var v = ( s.length > 0 ? k + " " + s + " " : '' ) + ":" + i;
-				this.params[i] = params[k];
-
-				columns.push( v );
+				else {
+					columns.push( this.stringify( params[ii], s, pre ) );
+				}
 			}
 		}
 
+		else if( type === "[object Object]" ) {
+			for( k in params ) {
+				if( toString.call( params[k] ) === "[object Array]" ) {
+					columns.push( k
+						+ " IN (" + this.stringify( params[k], "", "__in_" )
+						+ ")" );
+				}
+				else {
+					columns.push( this.stringify( params[k], s, pre ) );
+				}
+			}
+		}
+
+		else {
+			var i = pre + params.toString().replace(rx, "");
+			var v = ( s.length > 0 ? k + " " + s + " " : '' ) + ":" + i;
+			this.params[i] = params;
+
+			columns.push( v );
+		}
+
 		return columns;
+	}
+
+
+	/**
+	 * Reset all placeholders so next query isn't polluted
+	 */
+
+	Monologue.prototype.reset = function() {
+		this.params = {};
+
+		qparts = {
+			query: '',
+			where: '',
+			having: '',
+			order: [],
+			group: [],
+			limit: ''
+		};
 	}
 })();
