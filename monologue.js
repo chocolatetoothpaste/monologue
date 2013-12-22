@@ -7,7 +7,8 @@
 			having: '',
 			order: [],
 			group: [],
-			limit: ''
+			limit: '',
+			last: ''
 		};
 
 	function Monologue() {
@@ -21,8 +22,10 @@
 			having: '',
 			order: [],
 			group: [],
-			limit: ''
+			limit: '',
+			last: ''
 		};
+
 		return new Monologue;
 	}
 
@@ -42,10 +45,20 @@
 	Monologue.prototype.select = function( c, t ) {
 		this.reset();
 
-		c = ( typeof c === "string" ? c : c.join(", ") );
+		if( toString.call( c ) === "[object Array]" )
+			c = c.join( ", " );
 
 		qparts.query = "SELECT " + c + " FROM " + t;
 
+		return this;
+	}
+
+
+	/**
+	 */
+
+	Monologue.prototype.left = function( t, f ) {
+		qparts.query += " LEFT JOIN " + t + " ON " + f;
 		return this;
 	}
 
@@ -61,14 +74,11 @@
 			var columns = [], values = [], index = 0;
 
 			// if it's not a multidimensional array, cheat and make it one
-			if( toString.call(params) !== "[object Array]" ) {
+			if( toString.call( params ) !== "[object Array]" ) {
 				params = [params];
 			}
 
 			columns = this.stringify( params, "");
-
-			// console.log(columns);
-			// columns = "VALUES " + columns.join();
 			columns = " (" + columns.shift() + ") VALUES " + columns.join(',');
 		}
 
@@ -151,36 +161,11 @@
 	/**
 	 */
 
-	Monologue.prototype.having = function( h, separator ) {
-		separator = ( typeof separator === "undefined" ? "AND" : separator );
-
-		if( typeof h !== "string" ) {
-			var criteria = this.stringify(h);
-
-			// stringify the having statements
-			h = criteria.join( " " + separator + " " );
-		}
-
-		// check if a previous where statement has been set and glue it all together
-		qparts.having = ( qparts.having.length > 0
-			? qparts.having + " " + separator + " " + h
-			: h );
-
-		return this;
-	}
-
-
-	/**
-	 */
-
-	Monologue.prototype.in = function( ins, field ) {
-		field = field || "";
-		var i = this.stringify( [ins], '', '__in_');
-
-		i = " IN (" + i.join(",") + ")";
+	Monologue.prototype.in = function( ins ) {
+		var i = this.stringify( ins, '', 'i_');
 
 		// returns "this"
-		return this.where( i, "" );
+		return this.where( " IN (" + i.join( "," ) + ")", "" );
 	}
 
 
@@ -192,7 +177,7 @@
 
 		// calling this.where() will take of stringifying, so gluing the
 		// statement together is all that needs to be done here
-		var k = "__like_" + like.replace(rx, '');
+		var k = "l_" + like.replace(rx, '');
 		this.params[k] = like;
 		like = " LIKE :" + k;
 
@@ -206,8 +191,8 @@
 	Monologue.prototype.between = function( one, two )
 	{
 		// create unique field names for each value
-		var k1 = "__between_" + one.replace(rx, "");
-		var k2 = "__between_" + two.replace(rx, "");
+		var k1 = "b_" + one.replace(rx, "");
+		var k2 = "b_" + two.replace(rx, "");
 
 		this.params[k1] = one;
 		this.params[k2] = two;
@@ -226,6 +211,28 @@
 		if( typeof g !== "string" ) g = g.join( ',' );
 
 		qparts.group.push( g + " " + d );
+
+		return this;
+	};
+
+
+	/**
+	 */
+
+	Monologue.prototype.having = function( h, separator ) {
+		separator = ( typeof separator === "undefined" ? "AND" : separator );
+
+		if( typeof h !== "string" ) {
+			var criteria = this.stringify(h);
+
+			// stringify the having statements
+			h = criteria.join( " " + separator + " " );
+		}
+
+		// check if a previous where statement has been set and glue it all together
+		qparts.having = ( qparts.having.length > 0
+			? qparts.having + " " + separator + " " + h
+			: h );
 
 		return this;
 	}
@@ -258,6 +265,23 @@
 
 
 	/**
+	 */
+
+	Monologue.prototype.file = function( f, t, e, l ) {
+		if( typeof l === "undefined" ) {
+			l = e;
+			e = undefined;
+		}
+
+		qparts.last += " INTO OUTFILE '" + f + "' FIELDS TERMINATED BY '"
+			+ t + "' " + ( e ? "OPTIONALLY ENCLOSED BY '" + e + "'" : '' )
+			+ " LINES TERMINATED BY '" + l + "'";
+
+		return this;
+	};
+
+
+	/**
 	 * Compile each part together and generate a valid SQL statement
 	 */
 
@@ -273,6 +297,8 @@
 			qparts.query += " ORDER BY " + qparts.order.join(',');
 		if( qparts.limit.length > 0 )
 			qparts.query += " LIMIT " + qparts.limit;
+		if( qparts.last.length > 0 )
+			qparts.query += qparts.last;
 
 		this.sql = qparts.query;
 
@@ -281,53 +307,63 @@
 
 
 	/**
-	 * s: serator
+	 * p: params, s: separator, pre: bound param prefix
 	 */
 
-	Monologue.prototype.stringify = function( params, s, pre ) {
+	Monologue.prototype.stringify = function( p, s ) {
 		s = ( typeof s === "undefined" ? "=" : s );
-		pre = pre || '__eq_';
-		var columns = [],
-			type = toString.call( params );// === "[object Array]";
+		var c = [],
+			type = toString.call( p );
 
 		if( type === "[object Array]" ) {
-			for( var ii = 0, l = params.length; ii < l; ++ii ) {
-				if( toString.call( params[ii] ) === "[object Object]" ) {
-					// if columns is empty, then push the actual column names first
-					if( columns.length === 0 ) {
-						columns.push( Object.keys( params[ii] ) );
-					}
+			for( var ii = 0, l = p.length; ii < l; ++ii ) {
 
-					columns.push( "(" + this.stringify( params[ii], "" ) + ")");
-				}
-				else {
-					columns.push( this.stringify( params[ii], s, pre ) );
-				}
-			}
-		}
+				// if parent is an array and child is an object, generate an
+				// encapsulated list of values (for insert statements)
+				if( toString.call( p[ii] ) === "[object Object]" ) {
 
-		else if( type === "[object Object]" ) {
-			for( k in params ) {
-				if( toString.call( params[k] ) === "[object Array]" ) {
-					columns.push( k
-						+ " IN (" + this.stringify( params[k], "", "__in_" )
-						+ ")" );
+					// if "c" is empty, then push the actual column names
+					if( c.length === 0 ) c.push( Object.keys( p[ii] ) );
+
+					c.push( "(" + this.stringify( p[ii], "" ) + ")");
 				}
+
 				else {
-					columns.push( this.stringify( params[k], s, pre ) );
+
+					// generate a comma-separated list of fields
+					c.push( this.format( p[ii], ii, "" ) );
 				}
 			}
 		}
 
 		else {
-			var i = pre + params.toString().replace(rx, "");
-			var v = ( s.length > 0 ? k + " " + s + " " : '' ) + ":" + i;
-			this.params[i] = params;
+			for( var jj in p ) {
+				if( toString.call( p[jj] ) === "[object Array]" ) {
+					c.push( jj + " IN (" + this.stringify( p[jj] ) + ")" );
+				}
 
-			columns.push( v );
+				else {
+					c.push( this.format( p[jj], jj, s ) );
+				}
+			}
 		}
 
-		return columns;
+		return c;
+	}
+
+
+	/**
+	 */
+
+	Monologue.prototype.format = function( v, k, s ) {
+		// strip out non-alpha characters (makes parsers choke)
+		var push = v.toString().replace( rx, "" );
+
+		// add value to the param stack
+		this.params[push] = v;
+
+		// spit out the bound param name
+		return ( s.length > 0 ? k + " " + s + " " : '' ) + ":e_" + push;
 	}
 
 
@@ -344,7 +380,9 @@
 			having: '',
 			order: [],
 			group: [],
-			limit: ''
+			limit: '',
+			last: ''
 		};
 	}
+
 })();
