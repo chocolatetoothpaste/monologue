@@ -3,7 +3,6 @@ Monologue - Streamlined query building
 
 ### BREAKING CHANGE: monologue.query() will no longer return the query string, it will return "this".  monologue.sql will now have the compiled query, and monolouge.params will have your param values (no change)
 ### Behavior of monologue.like() was changed slightly, see examples below.  It will no longer add "%" for you, you can add it wherever you want.
-#### Monologue won't attempt to remove duplicates. It was problematic and opens the door to buggy output. Reduce your values sets before passing
 
 **Install**
 
@@ -43,13 +42,40 @@ This was ported from a PHP library, and uses named parameters for binding (PDO l
         }
     */
 
+
+    // JOIN (default is left):
+    // SELECT * FROM users u LEFT JOIN posts p ON p.user_id = u.id WHERE category = :e_67
+
+    monologue.select( "*", "users u" )
+        .join( "posts p", "p.user_id = u.id" )
+        .where( { "category": "67" } );
+
+
+    // JOIN (INNER, as argument):
+    // SELECT * FROM users u INNER JOIN posts p ON p.user_id = u.id WHERE category = :e_67
+
+    monologue.select( "*", "users u" )
+        .join( "INNER", "posts p", { "p.user_id": "u.id" } )
+        .where( { "category": "67" } );
+
+
     // SELECT into outfile: the third param (OPTIONALLY ENCLOSED BY) is, as stated, optional. Just pass in the line ending and leave the 4th param out, the rest will be taken care of
     // output: SELECT * FROM users WHERE company = :e_generalmotors INTO OUTFILE '/tmp/datafile' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' LINES TERMINATED BY '\n'
 
+    monologue.select( "*", "users" )
+        .where( { "company": "general motors" } )
+        .file( "/tmp/datafile", ",", '"', "\\n" )
+        .query();
+
+
+    // SELECT into outfile: without third param
+    // output: SELECT * FROM users WHERE company = :e_generalmotors INTO OUTFILE '/tmp/datafile' FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n'
+
     monologue.select( "*", "users")
-    .where( { "company": "general motors" } ) // alternative to where("id").in([...])
-    .file( "/tmp/datafile", ",", '"', "\\n" )
-    .query();
+        .where( { "company": "general motors" } )
+        .file( "/tmp/datafile", ",", "\\n" )
+        .query();
+
 
     // INSERT, passing an array of objects
     // output: INSERT INTO users (username,password,first_name) VALUES (:e_test,:e_1234,:e_me),(:e_example,:e_abcd,:e_rasta)

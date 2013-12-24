@@ -141,8 +141,7 @@
 	/**
 	 */
 
-	Monologue.prototype.delete = function( table, where )
-	{
+	Monologue.prototype.delete = function( table, where ) {
 		this.reset();
 
 		qparts.query = "DELETE FROM " + table;
@@ -180,7 +179,7 @@
 	 */
 
 	Monologue.prototype.in = function( ins ) {
-		var i = this.stringify( ins, '', 'i_');
+		var i = this.stringify( ins, '' );
 
 		// returns "this"
 		return this.where( " IN (" + i.join( "," ) + ")", "" );
@@ -206,8 +205,7 @@
 	/**
 	 */
 
-	Monologue.prototype.between = function( one, two )
-	{
+	Monologue.prototype.between = function( one, two ) {
 		// create unique field names for each value
 		var k1 = "b_" + one.replace(rx, "");
 		var k2 = "b_" + two.replace(rx, "");
@@ -220,13 +218,13 @@
 
 
 	/**
-	 * group, direction
+	 * g: group, d: direction
 	 */
 
 	Monologue.prototype.group = function( g, d ) {
 		d = d || 'ASC';
 
-		if( typeof g !== "string" ) g = g.join( ',' );
+		if( toString.call( g ) === "[object Array]" ) g = g.join( ',' );
 
 		qparts.group.push( g + " " + d );
 
@@ -235,6 +233,7 @@
 
 
 	/**
+	 * h: having
 	 */
 
 	Monologue.prototype.having = function( h, separator ) {
@@ -257,13 +256,13 @@
 
 
 	/**
-	 * order, direction
+	 * o: order, d: direction
 	 */
 
 	Monologue.prototype.order = function( o, d ) {
 		d = d || 'ASC';
 
-		if( typeof o !== "string" ) o = o.join( ',' );
+		if( toString.call( o ) === "[object Array]" ) o = o.join( ',' );
 
 		qparts.order.push( o + " " + d );
 
@@ -272,17 +271,17 @@
 
 
 	/**
-	 * limit, offset
+	 * l: limit, o: offset
 	 */
 
-	Monologue.prototype.limit = function( l, o )
-	{
+	Monologue.prototype.limit = function( l, o ) {
 		qparts.limit = ( typeof o === "undefined" ? l : o + ", " + l );
 		return this;
 	}
 
 
 	/**
+	 * f: file path, t: field terminator, e: field enclosure, l: line terminator
 	 */
 
 	Monologue.prototype.file = function( f, t, e, l ) {
@@ -303,8 +302,7 @@
 	 * Compile each part together and generate a valid SQL statement
 	 */
 
-	Monologue.prototype.query = function()
-	{
+	Monologue.prototype.query = function() {
 		if( qparts.join.length > 0 )
 			qparts.query += qparts.join.join();
 		if( qparts.where.length > 0 )
