@@ -1,7 +1,7 @@
 (function() {
 	var rx = /[^a-zA-Z0-9_]/g,
 		root = this,
-		qparts = {
+		global = {
 			query: '',
 			join: [],
 			where: '',
@@ -17,7 +17,7 @@
 	};
 
 	function monologue() {
-		qparts = {
+		global = {
 			query: '',
 			join: [],
 			where: '',
@@ -50,13 +50,14 @@
 		if( toString.call( c ) === "[object Array]" )
 			c = c.join( ", " );
 
-		qparts.query = "SELECT " + c + " FROM " + t;
+		global.query = "SELECT " + c + " FROM " + t;
 
 		return this;
 	}
 
 
 	/**
+	 * d: direction, t: table, f: fields
 	 */
 
 	Monologue.prototype.join = function( d, t, f ) {
@@ -75,7 +76,7 @@
 			f = fields.join(" AND ");
 		}
 
-		qparts.join.push( " " + d + " JOIN " + t + " ON " + f );
+		global.join.push( " " + d + " JOIN " + t + " ON " + f );
 
 		return this;
 	}
@@ -97,17 +98,18 @@
 			}
 
 			columns = this.stringify( params, "");
-			columns = " (" + columns.shift() + ") VALUES " + columns.join(',');
+			columns = "(" + columns.shift() + ") VALUES " + columns.join(',');
 		}
 
 		else if( typeof params === "string" ) {
-			var columns = " " + params;
+			var columns = params;
 		}
+
 		else {
 			// emit error
 		}
 
-		qparts.query = "INSERT INTO " + table + columns;
+		global.query = "INSERT INTO " + table + " " + columns;
 
 		return this;
 	};
@@ -121,18 +123,18 @@
 
 		if( typeof params === "object" ) {
 			var columns = this.stringify(params);
-			columns = " SET " + columns.join( ', ' );
+			columns = "SET " + columns.join( ', ' );
 		}
 
 		else if( typeof params === "string" ) {
-			var columns = " " + params;
+			var columns = params;
 		}
 
 		else {
 			// throw error
 		}
 
-		qparts.query = "UPDATE " + table + columns;
+		global.query = "UPDATE " + table + " " + columns;
 
 		return this;
 	};
@@ -144,7 +146,7 @@
 	Monologue.prototype.delete = function( table, where ) {
 		this.reset();
 
-		qparts.query = "DELETE FROM " + table;
+		global.query = "DELETE FROM " + table;
 		return ( where ? this.where( where ) : this );
 	};
 
@@ -167,8 +169,8 @@
 		}
 
 		// check if a previous where statement has been set and glue it all together
-		qparts.where = ( qparts.where.length > 0
-			? qparts.where + s + w
+		global.where = ( global.where.length > 0
+			? global.where + s + w
 			: w );
 
 		return this;
@@ -226,7 +228,7 @@
 
 		if( toString.call( g ) === "[object Array]" ) g = g.join( ',' );
 
-		qparts.group.push( g + " " + d );
+		global.group.push( g + " " + d );
 
 		return this;
 	};
@@ -247,8 +249,8 @@
 		}
 
 		// check if a previous where statement has been set and glue it all together
-		qparts.having = ( qparts.having.length > 0
-			? qparts.having + " " + separator + " " + h
+		global.having = ( global.having.length > 0
+			? global.having + " " + separator + " " + h
 			: h );
 
 		return this;
@@ -264,7 +266,7 @@
 
 		if( toString.call( o ) === "[object Array]" ) o = o.join( ',' );
 
-		qparts.order.push( o + " " + d );
+		global.order.push( o + " " + d );
 
 		return this;
 	}
@@ -275,7 +277,7 @@
 	 */
 
 	Monologue.prototype.limit = function( l, o ) {
-		qparts.limit = ( typeof o === "undefined" ? l : o + ", " + l );
+		global.limit = ( typeof o === "undefined" ? l : o + ", " + l );
 		return this;
 	}
 
@@ -290,7 +292,7 @@
 			e = undefined;
 		}
 
-		qparts.last += " INTO OUTFILE '" + f + "' FIELDS TERMINATED BY '"
+		global.last += " INTO OUTFILE '" + f + "' FIELDS TERMINATED BY '"
 			+ t + "' " + ( e ? "OPTIONALLY ENCLOSED BY '" + e + "'" : '' )
 			+ " LINES TERMINATED BY '" + l + "'";
 
@@ -303,22 +305,22 @@
 	 */
 
 	Monologue.prototype.query = function() {
-		if( qparts.join.length > 0 )
-			qparts.query += qparts.join.join();
-		if( qparts.where.length > 0 )
-			qparts.query += " WHERE " + qparts.where;
-		if( qparts.group.length > 0 )
-			qparts.query += " GROUP BY " + qparts.group.join(',');
-		if( qparts.having.length > 0 )
-			qparts.query += " HAVING " + qparts.having;
-		if( qparts.order.length > 0 )
-			qparts.query += " ORDER BY " + qparts.order.join(',');
-		if( qparts.limit.length > 0 )
-			qparts.query += " LIMIT " + qparts.limit;
-		if( qparts.last.length > 0 )
-			qparts.query += qparts.last;
+		if( global.join.length > 0 )
+			global.query += global.join.join();
+		if( global.where.length > 0 )
+			global.query += " WHERE " + global.where;
+		if( global.group.length > 0 )
+			global.query += " GROUP BY " + global.group.join(',');
+		if( global.having.length > 0 )
+			global.query += " HAVING " + global.having;
+		if( global.order.length > 0 )
+			global.query += " ORDER BY " + global.order.join(',');
+		if( global.limit.length > 0 )
+			global.query += " LIMIT " + global.limit;
+		if( global.last.length > 0 )
+			global.query += global.last;
 
-		this.sql = qparts.query;
+		this.sql = global.query;
 
 		return this;
 	}
@@ -392,7 +394,7 @@
 	Monologue.prototype.reset = function() {
 		this.params = {};
 
-		qparts = {
+		global = {
 			query: '',
 			join: [],
 			where: '',
