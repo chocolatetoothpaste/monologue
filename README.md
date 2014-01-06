@@ -1,9 +1,6 @@
 Monologue - Streamlined query building
 ======================================
 
-### BREAKING CHANGE: monologue.query() will no longer return the query string, it will return "this".  monologue.sql will now have the compiled query, and monolouge.params will have your param values (no change)
-### Behavior of monologue.like() was changed slightly, see examples below.  It will no longer add "%" for you, you can add it wherever you want.
-
 **Install**
 
     npm install monologue

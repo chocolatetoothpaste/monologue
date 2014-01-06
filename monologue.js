@@ -378,12 +378,13 @@
 	Monologue.prototype.format = function( v, k, s ) {
 		// strip out non-alpha characters (makes parsers choke)
 		var push = v.toString().replace( rx, "" );
+		var r = "e_" + push;
 
 		// add value to the param stack
-		this.params[push] = v;
+		this.params[r] = v;
 
 		// spit out the bound param name
-		return ( s.length > 0 ? k + " " + s + " " : '' ) + ":e_" + push;
+		return ( s.length > 0 ? k + " " + s + " " : '' ) + ":" + r;
 	}
 
 
