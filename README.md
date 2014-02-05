@@ -11,7 +11,7 @@ Monologue - Streamlined query building
 
 This was ported from a PHP library, and uses named parameters for binding (PDO library). Some mysql packages in node support this, see their documentation for examples. This package will continue to evolve and support other methods in the future.
 
-    var mono = require('monologue');
+    var monologue = require('monologue');
 
     // Less than basic SELECT statement
 
