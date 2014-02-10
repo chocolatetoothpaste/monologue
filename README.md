@@ -1,7 +1,7 @@
 Monologue - Streamlined query building
 ======================================
 
-*Breaking Change - it has become obvious that in some cases, multiple instances of monologue may be used in a single script.  To accommodate this, the constructor is now deployed through a wrapper.  See examples below for correct usage.
+* Breaking Change - it has become obvious that in some cases, multiple instances of monologue may be used in a single script.  To accommodate this, the constructor is now deployed through a wrapper.  See examples below for correct usage.
 
 **Install**
 
@@ -27,7 +27,7 @@ This was ported from a PHP library, and uses named parameters for binding (PDO l
         .query();
 
     console.log( mono.sql )
-    // output: SELECT * FROM users WHERE id IN (:i_1,:i_2,:i_3,:i_4,:i_5,:i_6) AND username = :e_someguy AND email = :e_someguyexampleorg OR email = :e_someguygmailcom AND date BETWEEN :b_20120912 AND :b_20130121 AND name LIKE :l_roen OR name LIKE :l_bb GROUP BY type ASC ORDER BY id ASC LIMIT 1000, 300
+    // output: SELECT * FROM users WHERE id IN (:i_1,:i_2,:i_3,:i_4,:i_5,:i_6) AND username = :mono_someguy AND email = :mono_someguyexampleorg OR email = :mono_someguygmailcom AND date BETWEEN :b_20120912 AND :b_20130121 AND name LIKE :l_roen OR name LIKE :l_bb GROUP BY type ASC ORDER BY id ASC LIMIT 1000, 300
 
     console.log( mono.params );
     /* output:
@@ -46,7 +46,7 @@ This was ported from a PHP library, and uses named parameters for binding (PDO l
 
 
     // JOIN (default is left):
-    // SELECT * FROM users u LEFT JOIN posts p ON p.user_id = u.id WHERE category = :e_67
+    // SELECT * FROM users u LEFT JOIN posts p ON p.user_id = u.id WHERE category = :mono_67
 
     monologue().select( "*", "users u" )
         .join( "posts p", "p.user_id = u.id" )
@@ -55,7 +55,7 @@ This was ported from a PHP library, and uses named parameters for binding (PDO l
 
 
     // JOIN (INNER, as argument):
-    // SELECT * FROM users u INNER JOIN posts p ON p.user_id = u.id WHERE category = :e_67
+    // SELECT * FROM users u INNER JOIN posts p ON p.user_id = u.id WHERE category = :mono_67
 
     monologue().select( "*", "users u" )
         .join( "INNER", "posts p", { "p.user_id": "u.id" } )
@@ -64,7 +64,7 @@ This was ported from a PHP library, and uses named parameters for binding (PDO l
 
 
     // SELECT into outfile: the third param (OPTIONALLY ENCLOSED BY) is, as stated, optional. Just pass in the line ending and leave the 4th param out, the rest will be taken care of
-    // output: SELECT * FROM users WHERE company = :e_generalmotors INTO OUTFILE '/tmp/datafile' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' LINES TERMINATED BY '\n'
+    // output: SELECT * FROM users WHERE company = :mono_generalmotors INTO OUTFILE '/tmp/datafile' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' LINES TERMINATED BY '\n'
 
     monologue().select( "*", "users" )
         .where( { "company": "general motors" } )
@@ -73,7 +73,7 @@ This was ported from a PHP library, and uses named parameters for binding (PDO l
 
 
     // SELECT into outfile: without third param
-    // output: SELECT * FROM users WHERE company = :e_generalmotors INTO OUTFILE '/tmp/datafile' FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n'
+    // output: SELECT * FROM users WHERE company = :mono_generalmotors INTO OUTFILE '/tmp/datafile' FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n'
 
     monologue().select( "*", "users")
         .where( { "company": "general motors" } )
@@ -82,7 +82,7 @@ This was ported from a PHP library, and uses named parameters for binding (PDO l
 
 
     // INSERT, passing an array of objects
-    // output: INSERT INTO users (username,password,first_name) VALUES (:e_test,:e_1234,:e_me),(:e_example,:e_abcd,:e_rasta)
+    // output: INSERT INTO users (username,password,first_name) VALUES (:mono_test,:mono_1234,:mono_me),(:mono_example,:mono_abcd,:mono_rasta)
 
     monologue().insert( 'users', [
         { username: 'test', password: '1234', first_name: 'me' },
@@ -91,18 +91,18 @@ This was ported from a PHP library, and uses named parameters for binding (PDO l
 
 
     // INSERT, passing a single object
-    // output: INSERT INTO users (username,password,first_name) VALUES (:e_me,:e_abcd,:e_cubert)
+    // output: INSERT INTO users (username,password,first_name) VALUES (:mono_me,:mono_abcd,:mono_cubert)
 
     monologue().insert( 'users', { username: 'me', password: 'abcd', first_name: "cubert" } ).query().sql
 
 
     // UPDATE
-    // output: UPDATE users SET username = :e_yoyo, email = :e_kay, password = :e_abcdefg WHERE id = :e_23
+    // output: UPDATE users SET username = :mono_yoyo, email = :mono_kay, password = :mono_abcdefg WHERE id = :mono_23
 
     monologue().update( "users", {username: "yoyo", email: 'some@email.com', password: "abcdefg"} ).where( {id: 23} ).query().sql
 
 
     // DELETE
-    // output: DELETE FROM users WHERE username = :e_test AND password = :e_1234 AND first_name = :e_me
+    // output: DELETE FROM users WHERE username = :mono_test AND password = :mono_1234 AND first_name = :mono_me
 
     monologue().delete( 'users', { username: 'test', password: '1234', first_name: "me" } ).query().sql;

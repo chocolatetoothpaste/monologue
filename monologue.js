@@ -351,7 +351,7 @@
 			format: function( v, k, s ) {
 				// strip out non-alpha characters (makes parsers choke)
 				var push = v.toString().replace( rx, "" );
-				var r = "e_" + push;
+				var r = "mono_" + push;
 
 				// add value to the param stack
 				this.params[r] = v;
@@ -370,6 +370,5 @@
 		// root.monologue = new Monologue;
 		root.monologue = monologue;
 	}
-
 
 })();
