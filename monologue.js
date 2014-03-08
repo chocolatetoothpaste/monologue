@@ -11,7 +11,8 @@
 			order: [],
 			group: [],
 			limit: '',
-			last: ''
+			last: '',
+			columns: null
 		};
 
 		return {
@@ -305,24 +306,21 @@
 
 			stringify: function( p, s ) {
 				s = ( typeof s === "undefined" ? "=" : s );
-				var c = [],
-					type = toString.call( p );
+				var c = [];
 
-				if( type === "[object Array]" ) {
+				if( Array.isArray( p ) ) {
+					// grab the column names from the first object
+					global.columns = Object.keys( p[0] ).sort();
+
 					for( var ii = 0, l = p.length; ii < l; ++ii ) {
-
 						// if parent is an array and child is an object,
 						// generate an encapsulated list of values (for inserts)
 						if( toString.call( p[ii] ) === "[object Object]" ) {
-
-							// if "c" is empty, push actual column names
-							if( c.length === 0 ) c.push( Object.keys( p[ii] ) );
-
+							c.push( global.columns );
 							c.push( "(" + this.stringify( p[ii], "" ) + ")");
 						}
 
 						else {
-
 							// generate a comma-separated list of fields
 							c.push( this.format( p[ii], ii, "" ) );
 						}
@@ -330,13 +328,14 @@
 				}
 
 				else {
-					for( var jj in p ) {
-						if( toString.call( p[jj] ) === "[object Array]" ) {
-							c.push( jj + " IN (" + this.stringify( p[jj] ) + ")" );
+					var col = global.columns || Object.keys( p ).sort();
+					for( var jj = 0, len = col.length; jj < len; ++jj ) {
+						if( Array.isArray( p[col[jj]] ) ) {
+							c.push( col[jj] + " IN (" + this.stringify( p[col[jj]] ) + ")" );
 						}
 
 						else {
-							c.push( this.format( p[jj], jj, s ) );
+							c.push( this.format( p[col[jj]], col[jj], s ) );
 						}
 					}
 				}
