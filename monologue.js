@@ -3,6 +3,7 @@
 		root = this;
 
 	function monologue() {
+		// semi-global object to contain query parts until they are compiled
 		var global = {
 			query: '',
 			join: [],
@@ -23,7 +24,7 @@
 			 */
 
 			select: function( c, t ) {
-				if( toString.call( c ) === "[object Array]" )
+				if( Array.isArray( c ) )
 					c = c.join( ", " );
 
 				global.query = "SELECT " + c + " FROM " + t;
@@ -33,14 +34,13 @@
 
 
 			/**
-			 * d: direction, t: table, f: fields
 			 */
 
-			join: function( d, t, f ) {
+			join: function( dir, t, f ) {
 				if( typeof f === "undefined" ) {
 					f = t;
-					t = d;
-					d = "LEFT";
+					t = dir;
+					dir = "LEFT";
 				}
 
 				if( typeof f === "object" ) {
@@ -50,64 +50,63 @@
 					}
 
 					f = fields.join(" AND ");
+					delete fields;
 				}
 
-				global.join.push( " " + d + " JOIN " + t + " ON " + f );
+				global.join.push( " " + dir + " JOIN " + t + " ON " + f );
 
 				return this;
 			},
 
 
 			/**
+			 * t: table, p: params
 			 */
 
-			insert: function( table, params ) {
-				// I don't know why this would ever NOT be ther case
-				if( typeof params === "object" ) {
-					var columns = [], values = [], index = 0;
+			insert: function( t, p ) {
+				// I don't know why this would ever NOT be the case
+				if( typeof p === "object" ) {
+					var c = [];
 
-					// if it's not a multidimensional array, cheat and make it one
-					if( toString.call( params ) !== "[object Array]" ) {
-						params = [params];
+					// if it's not a nested array, cheat and make it one
+					if( toString.call( p ) !== "[object Array]" ) {
+						p = [p];
 					}
 
-					columns = this.stringify( params, "");
-					columns = "(" + columns.shift() + ") VALUES "
-						+ columns.join(',');
+					c = this.stringify( p, "");
+					c = "(" + c.shift() + ") VALUES "
+						+ c.join(',');
 				}
 
-				else if( typeof params === "string" ) {
-					var columns = params;
+				else if( typeof p === "string" ) {
+					var c = p;
 				}
 
-				else {
-					// emit error
-				}
-
-				global.query = "INSERT INTO " + table + " " + columns;
+				global.query = "INSERT INTO " + t + " " + c;
 
 				return this;
 			},
 
 
 			/**
+			 * t: table, p: params
 			 */
 
-			update: function( table, params ) {
-				if( typeof params === "object" ) {
-					var columns = this.stringify(params);
-					columns = "SET " + columns.join( ', ' );
+			update: function( t, p ) {
+				if( typeof p === "object" ) {
+					var c = this.stringify( p );
+					c = "SET " + c.join( ', ' );
 				}
 
-				else if( typeof params === "string" ) {
-					var columns = params;
+				else if( typeof p === "string" ) {
+					var c = p;
 				}
 
 				else {
 					// throw error
 				}
 
-				global.query = "UPDATE " + table + " " + columns;
+				global.query = "UPDATE " + t + " " + c;
 
 				return this;
 			},
@@ -116,9 +115,9 @@
 			/**
 			 */
 
-			delete: function( table, where ) {
-				global.query = "DELETE FROM " + table;
-				return ( where ? this.where( where ) : this );
+			delete: function( t, w ) {
+				global.query = "DELETE FROM " + t;
+				return ( w ? this.where( w ) : this );
 			},
 
 
@@ -130,13 +129,11 @@
 				s = ( typeof s === "undefined" ? "AND" : s );
 				s = ( s.length > 0 ? " " + s + " " : s );
 
-				// console.log(w)
-
 				if( toString.call( w ) === "[object Object]" ) {
-					var criteria = this.stringify( w );
+					var crit = this.stringify( w );
 
 					// stringify the where statements
-					w = criteria.join( s );
+					w = crit.join( s );
 				}
 
 				// check if a previous where statement has been set and glue it
@@ -163,8 +160,8 @@
 			/**
 			 */
 
-			like: function( like, separator ) {
-				separator = separator || "AND";
+			like: function( like, sep ) {
+				sep = sep || "AND";
 
 				// calling this.where() will take of stringifying, so gluing the
 				// statement together is all that needs to be done here
@@ -210,20 +207,20 @@
 			 * h: having
 			 */
 
-			having: function( h, separator ) {
-				separator = ( typeof separator === "undefined" ? "AND" : separator );
+			having: function( h, sep ) {
+				sep = ( typeof sep === "undefined" ? "AND" : sep );
 
 				if( typeof h !== "string" ) {
 					var criteria = this.stringify(h);
 
 					// stringify the having statements
-					h = criteria.join( " " + separator + " " );
+					h = criteria.join( " " + sep + " " );
 				}
 
 				// check if a previous statement has been set and glue it
 				// all together
 				global.having = ( global.having.length > 0
-					? global.having + " " + separator + " " + h
+					? global.having + " " + sep + " " + h
 					: h );
 
 				return this;
@@ -256,7 +253,8 @@
 
 
 			/**
-			 * f: file path, t: field terminator, e: field enclosure, l: line terminator
+			 * f: file path, t: field terminator, e: field enclosure,
+			 * l: line terminator
 			 */
 
 			file: function( f, t, e, l ) {
@@ -301,6 +299,7 @@
 
 
 			/**
+			 * Takes an object or and array of objects and builds a SQL string
 			 * p: params, s: separator, pre: bound param prefix
 			 */
 
@@ -311,15 +310,17 @@
 				if( Array.isArray( p ) ) {
 					// grab the column names from the first object
 					global.columns = Object.keys( p[0] ).sort();
+					c.push( global.columns );
 
 					for( var ii = 0, l = p.length; ii < l; ++ii ) {
 						// if parent is an array and child is an object,
 						// generate an encapsulated list of values (for inserts)
 						if( toString.call( p[ii] ) === "[object Object]" ) {
-							c.push( global.columns );
 							c.push( "(" + this.stringify( p[ii], "" ) + ")");
 						}
 
+						// I can't think of a circumstance where this block
+						// would ever execute. further testing needed.
 						else {
 							// generate a comma-separated list of fields
 							c.push( this.format( p[ii], ii, "" ) );
@@ -345,6 +346,7 @@
 
 
 			/**
+			 * takes a key/value and formats it for use in a bound-param query
 			 */
 
 			format: function( v, k, s ) {
@@ -362,11 +364,9 @@
 	}
 
 	if( typeof module !== "undefined" && module.exports ) {
-		// module.exports = new Monologue;
 		module.exports = monologue;
 	}
 	else {
-		// root.monologue = new Monologue;
 		root.monologue = monologue;
 	}
 
