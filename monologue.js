@@ -247,7 +247,7 @@
 			 */
 
 			limit: function( l, o ) {
-				global.limit = ( typeof o === "undefined" ? l : o + ", " + l );
+				global.limit = ( typeof o === "undefined" ? l.toString() : o + ", " + l );
 				return this;
 			},
 
