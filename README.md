@@ -1,8 +1,6 @@
 Monologue - Streamlined query building
 ======================================
 
-* Breaking Change - it has become obvious that in some cases, multiple instances of monologue may be used in a single script.  To accommodate this, the constructor is now deployed through a wrapper.  See examples below for correct usage.
-
 **Install**
 
     npm install monologue

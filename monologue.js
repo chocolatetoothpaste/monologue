@@ -13,7 +13,8 @@
 			group: [],
 			limit: '',
 			last: '',
-			columns: null
+			columns: null,
+			itr: 0
 		};
 
 		return {
@@ -350,9 +351,9 @@
 			 */
 
 			format: function( v, k, s ) {
-				// strip out non-alpha characters (makes parsers choke)
-				var push = v.toString().replace( rx, "" );
-				var r = "mono_" + push;
+				// using an iterator for field names to avoid collisions
+				++global.itr;
+				var r = "mono_" + global.itr;
 
 				// add value to the param stack
 				this.params[r] = v;
