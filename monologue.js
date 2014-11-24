@@ -154,7 +154,7 @@
 				var i = this.stringify( ins, '' );
 
 				// returns "this"
-				return this.where( " IN (" + i.join( "," ) + ")", "" );
+				return this.where( " IN (" + i + ")", "" );
 			},
 
 
@@ -309,14 +309,15 @@
 				var c = [];
 
 				if( Array.isArray( p ) ) {
-					// grab the column names from the first object
-					global.columns = Object.keys( p[0] ).sort();
-					c.push( global.columns );
-
 					for( var ii = 0, l = p.length; ii < l; ++ii ) {
 						// if parent is an array and child is an object,
 						// generate an encapsulated list of values (for inserts)
 						if( toString.call( p[ii] ) === "[object Object]" ) {
+							if( c.length === 0 ) {
+								// grab the column names from the first object
+								global.columns = Object.keys( p[0] ).sort();
+								c.push( global.columns );
+							}
 							c.push( "(" + this.stringify( p[ii], "" ) + ")");
 						}
 
