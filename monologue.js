@@ -2,7 +2,8 @@
 	var rx = /[^a-zA-Z0-9_]/g,
 		root = this;
 
-	function monologue() {
+	function monologue(opt) {
+		opt = opt || { inline: false };
 		// semi-global object to contain query parts until they are compiled
 		var global = {
 			query: '',
@@ -14,7 +15,8 @@
 			limit: '',
 			last: '',
 			columns: null,
-			itr: 0
+			itr: 0,
+			inline: opt.inline
 		};
 
 		return {
@@ -316,13 +318,11 @@
 							if( c.length === 0 ) {
 								// grab the column names from the first object
 								global.columns = Object.keys( p[0] ).sort();
-								c.push( global.columns );
+								c.push( "`" + global.columns.join('`, `') + "`" );
 							}
 							c.push( "(" + this.stringify( p[ii], "" ) + ")");
 						}
 
-						// I can't think of a circumstance where this block
-						// would ever execute. further testing needed.
 						else {
 							// generate a comma-separated list of fields
 							c.push( this.format( p[ii], ii, "" ) );
@@ -352,15 +352,48 @@
 			 */
 
 			format: function( v, k, s ) {
-				// using an iterator for field names to avoid collisions
-				++global.itr;
-				var r = "mono_" + global.itr;
+				var r;
 
-				// add value to the param stack
-				this.params[r] = v;
+				if( global.inline ) {
+					r = this.escape(v);
+				}
+				else {
+					// using an iterator for field names to avoid collisions
+					++global.itr;
+					r = ":mono_" + global.itr;
+
+					// add value to the param stack
+					this.params[r] = v;
+				}
 
 				// spit out the bound param name
-				return ( s.length > 0 ? k + " " + s + " " : '' ) + ":" + r;
+				return ( s.length > 0 ? "" + k + " " + s + " " : '' ) + r;
+
+			},
+
+			escape: function(v) {
+				if (v === undefined || v === null) {
+					return 'NULL';
+				}
+
+				switch (typeof v) {
+					case 'boolean': return (v) ? 'true' : 'false';
+					case 'number': return v + '';
+				}
+
+				v = v.replace(/[\0\n\r\b\t\\\'\"\x1a]/g, function(s) {
+					switch(s) {
+						case "\0": return "\\0";
+						case "\n": return "\\n";
+						case "\r": return "\\r";
+						case "\b": return "\\b";
+						case "\t": return "\\t";
+						case "\x1a": return "\\Z";
+						default: return "\\" + s;
+					}
+				});
+
+				return "'" + v + "'";
 			}
 		}
 	}
