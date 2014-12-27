@@ -1,17 +1,23 @@
 {
-	"name": "monologue",
-	"version": "0.3.0",
-	"description": "Streamlined MySQL query building",
-	"main": "./monologue.js",
-	"author": {
-		"name": "Ross Paskett",
-		"email": "ross@pasket.me"
-	},
-	"keywords": [
-		"mysql", "query", "sql", "builder"
-	],
-	"repository": {
-		"type": "git",
-		"url": "git://github.com/chocolatetoothpaste/monologue"
-	}
+  "name": "monologue",
+  "version": "0.3.0",
+  "description": "Streamlined MySQL query building",
+  "main": "./monologue.js",
+  "author": {
+    "name": "Ross Paskett",
+    "email": "ross@pasket.me"
+  },
+  "keywords": [
+    "mysql",
+    "query",
+    "sql",
+    "builder"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/chocolatetoothpaste/monologue"
+  },
+  "devDependencies": {
+    "nodeunit": "^0.9.0"
+  }
 }
