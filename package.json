@@ -1,6 +1,6 @@
 {
 	"name": "monologue",
-	"version": "0.2.10",
+	"version": "0.3.0",
 	"description": "Streamlined MySQL query building",
 	"main": "./monologue.js",
 	"author": {
@@ -8,7 +8,7 @@
 		"email": "ross@pasket.me"
 	},
 	"keywords": [
-		"mysql", "query"
+		"mysql", "query", "sql", "builder"
 	],
 	"repository": {
 		"type": "git",

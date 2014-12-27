@@ -1,9 +1,20 @@
-(function() {
+(function(exports) {
+	"use strict";
 	var rx = /[^a-zA-Z0-9_]/g,
 		root = this;
 
 	function monologue(opt) {
-		opt = opt || { inline: false };
+		var dict = { escape: true, quote: false };
+
+		if( typeof opt === "undefined" ) {
+			opt = dict;
+		}
+		else {
+			for( var i in dict ) {
+				opt[i] = ( typeof opt[i] === "undefined" ? dict[i] : opt[i] );
+			}
+		}
+
 		// semi-global object to contain query parts until they are compiled
 		var global = {
 			query: '',
@@ -16,12 +27,31 @@
 			last: '',
 			columns: null,
 			itr: 0,
-			inline: opt.inline
 		};
 
 		return {
 			params: {},
 			sql: '',
+
+
+			/**
+			 * resets the global container object
+			 */
+
+			reset: function() {
+				global = {
+					query: '',
+					join: [],
+					where: '',
+					having: '',
+					order: [],
+					group: [],
+					limit: '',
+					last: '',
+					columns: null,
+					itr: 0,
+				};
+			},
 
 			/**
 			 */
@@ -37,13 +67,15 @@
 
 
 			/**
+			 * direction, table, fields
 			 */
 
 			join: function( dir, t, f ) {
+				// default to left join if unspecified
 				if( typeof f === "undefined" ) {
 					f = t;
 					t = dir;
-					dir = "LEFT";
+					dir = "INNER";
 				}
 
 				if( typeof f === "object" ) {
@@ -53,7 +85,6 @@
 					}
 
 					f = fields.join(" AND ");
-					delete fields;
 				}
 
 				global.join.push( " " + dir + " JOIN " + t + " ON " + f );
@@ -72,13 +103,12 @@
 					var c = [];
 
 					// if it's not a nested array, cheat and make it one
-					if( toString.call( p ) !== "[object Array]" ) {
+					if( ! Array.isArray( p ) ) {
 						p = [p];
 					}
 
 					c = this.stringify( p, "");
-					c = "(" + c.shift() + ") VALUES "
-						+ c.join(',');
+					c = "(" + c.shift() + ") VALUES " + c.join(',');
 				}
 
 				else if( typeof p === "string" ) {
@@ -168,11 +198,19 @@
 
 				// calling this.where() will take of stringifying, so gluing the
 				// statement together is all that needs to be done here
-				var k = "l_" + like.replace(rx, '');
-				this.params[k] = like;
-				like = " LIKE :" + k;
+				if( opt.escape ) {
+					like = " LIKE " + this.escape(like);
+				}
 
-				return this.where( like, "" );
+				else {
+					var k = "l_" + like.replace(rx, '');
+					this.params[k] = like;
+					like = " LIKE :" + k;
+				}
+
+				global.where += like;
+
+				return this;
 			},
 
 
@@ -180,14 +218,28 @@
 			 */
 
 			between: function( one, two ) {
-				// create unique field names for each value
-				var k1 = "b_" + one.replace(rx, "");
-				var k2 = "b_" + two.replace(rx, "");
+				var between = '';
 
-				this.params[k1] = one;
-				this.params[k2] = two;
+				if( opt.escape ) {
+					between = " BETWEEN " + this.escape(one) + " AND "
+						+ this.escape(two);
+				}
 
-				return this.where( " BETWEEN :" + k1 + " AND :" + k2, '' );
+				else {
+
+					// create unique field names for each value
+					var k1 = "b_" + one.replace(rx, "");
+					var k2 = "b_" + two.replace(rx, "");
+
+					this.params[k1] = one;
+					this.params[k2] = two;
+
+					between = " BETWEEN :" + k1 + " AND :" + k2
+				}
+
+				global.where += between;
+
+				return this;
 			},
 
 
@@ -198,7 +250,8 @@
 			group: function( g, d ) {
 				d = d || 'ASC';
 
-				if( toString.call( g ) === "[object Array]" ) g = g.join( ',' );
+				if( Array.isArray( g ) )
+					g = g.join( ', ' );
 
 				global.group.push( g + " " + d );
 
@@ -237,7 +290,8 @@
 			order: function( o, d ) {
 				d = d || 'ASC';
 
-				if( toString.call( o ) === "[object Array]" ) o = o.join( ',' );
+				if( Array.isArray( o ) )
+					o = o.join( ', ' );
 
 				global.order.push( o + " " + d );
 
@@ -251,6 +305,20 @@
 
 			limit: function( l, o ) {
 				global.limit = ( typeof o === "undefined" ? l.toString() : o + ", " + l );
+				return this;
+			},
+
+
+			union: function( c, t ) {
+				if( Array.isArray( c ) )
+					c = c.join( ", " );
+
+				var sql = this.query().sql;
+
+				this.reset();
+
+				global.query = sql += " UNION SELECT " + c + " FROM " + t;
+
 				return this;
 			},
 
@@ -318,8 +386,14 @@
 							if( c.length === 0 ) {
 								// grab the column names from the first object
 								global.columns = Object.keys( p[0] ).sort();
-								c.push( "`" + global.columns.join('`, `') + "`" );
+
+								var ret = ( opt.quote
+									? "`" + global.columns.join('`, `') + "`"
+									: global.columns.join(', ') )
+
+								c.push( ret );
 							}
+
 							c.push( "(" + this.stringify( p[ii], "" ) + ")");
 						}
 
@@ -332,9 +406,16 @@
 
 				else {
 					var col = global.columns || Object.keys( p ).sort();
+
 					for( var jj = 0, len = col.length; jj < len; ++jj ) {
+						// matching a column to a set, i.e. {id: [1,2,3,4]}
 						if( Array.isArray( p[col[jj]] ) ) {
-							c.push( col[jj] + " IN (" + this.stringify( p[col[jj]] ) + ")" );
+							var n = ( opt.quote
+								? '`' + col[jj] + '`'
+								: col[jj] )
+								+ " IN (" + this.stringify( p[col[jj]] ) + ")";
+
+							c.push( n );
 						}
 
 						else {
@@ -354,7 +435,7 @@
 			format: function( v, k, s ) {
 				var r;
 
-				if( global.inline ) {
+				if( opt.escape ) {
 					r = this.escape(v);
 				}
 				else {
@@ -366,10 +447,19 @@
 					this.params[r] = v;
 				}
 
+				if( opt.quote ) {
+					k = '`' + k + '`';
+				}
+
 				// spit out the bound param name
 				return ( s.length > 0 ? "" + k + " " + s + " " : '' ) + r;
 
 			},
+
+
+			/**
+			 * Escape unsafe characters to avoid sql injection
+			 */
 
 			escape: function(v) {
 				if (v === undefined || v === null) {
@@ -398,11 +488,13 @@
 		}
 	}
 
+	// exports = monologue;
+
 	if( typeof module !== "undefined" && module.exports ) {
 		module.exports = monologue;
 	}
 	else {
-		root.monologue = monologue;
+		window.monologue = monologue;
 	}
 
-})();
+})( typeof window === 'undefined' ? module.exports : window );
