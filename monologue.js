@@ -1,7 +1,5 @@
 (function(exports) {
 	"use strict";
-	var rx = /[^a-zA-Z0-9_]/g,
-		root = this;
 
 	function monologue(opt) {
 		var dict = { escape: true, quote: false };
@@ -14,6 +12,9 @@
 				opt[i] = ( typeof opt[i] === "undefined" ? dict[i] : opt[i] );
 			}
 		}
+
+		// hard-coded prevention for now
+		opt.quote = false;
 
 		// semi-global object to contain query parts until they are compiled
 		var global = {
@@ -203,7 +204,7 @@
 				}
 
 				else {
-					var k = "l_" + like.replace(rx, '');
+					var k = "l_" + like.replace(/[^a-zA-Z0-9_]/g, '');
 					this.params[k] = like;
 					like = " LIKE :" + k;
 				}
@@ -228,8 +229,8 @@
 				else {
 
 					// create unique field names for each value
-					var k1 = "b_" + one.replace(rx, "");
-					var k2 = "b_" + two.replace(rx, "");
+					var k1 = "b_" + one.replace(/[^a-zA-Z0-9_]/g, "");
+					var k2 = "b_" + two.replace(/[^a-zA-Z0-9_]/g, "");
 
 					this.params[k1] = one;
 					this.params[k2] = two;
@@ -304,7 +305,9 @@
 			 */
 
 			limit: function( l, o ) {
-				global.limit = ( typeof o === "undefined" ? l.toString() : o + ", " + l );
+				global.limit = ( typeof o === "undefined"
+					? '' + l
+					: o + ", " + l );
 				return this;
 			},
 
