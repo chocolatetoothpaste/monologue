@@ -77,25 +77,41 @@ exports.delete = function(test) {
 };
 
 exports.join = function(test) {
-	test.expect(2);
+	test.expect(3);
 
 	test.deepEqual(
 		monologue().select( "*", "users u" )
 			.join( "posts p", "p.user_id = u.id" )
 			.where( { "category": "67" } )
 			.query().sql,
-		"SELECT * FROM users u INNER JOIN posts p ON p.user_id = u.id WHERE category = '67'",
+		"SELECT * FROM users u LEFT JOIN posts p ON p.user_id = u.id WHERE category = '67'",
 		"Default JOIN"
 	);
 
 	test.deepEqual(
 		monologue().select( "*", "users u" )
-			.join( "LEFT", "posts p", { "p.user_id": "u.id" } )
+			.join( "INNER", "posts p", { "p.user_id": "u.id" } )
 			.where( { "category": "67" } )
 			.query().sql,
-		"SELECT * FROM users u LEFT JOIN posts p ON p.user_id = u.id WHERE category = '67'",
-		"Specifying join type: LEFT JOIN"
+		"SELECT * FROM users u INNER JOIN posts p ON p.user_id = u.id WHERE category = '67'",
+		"Specifying join type: INNER JOIN"
 	);
+
+	var multi = monologue().select( "*", "users u" )
+		.join( "posts p", "p.user_id = u.id" )
+		.join( "INNER", "post_meta m", "m.post_id = p.id" )
+		.join( "comments c", "p.id = c.post_id" )
+		// .join( "posts p", "p.user_id = u.id" )
+		.where( { "category": "67" } )
+		.query().sql;
+
+	test.deepEqual(
+		multi,
+		"SELECT * FROM users u LEFT JOIN posts p ON p.user_id = u.id INNER JOIN post_meta m ON m.post_id = p.id LEFT JOIN comments c ON p.id = c.post_id WHERE category = '67'",
+		"Multiple JOINs"
+	);
+
+	console.log(multi);
 
 	test.done();
 };

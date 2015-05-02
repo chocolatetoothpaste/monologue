@@ -76,7 +76,7 @@
 				if( typeof f === "undefined" ) {
 					f = t;
 					t = dir;
-					dir = "INNER";
+					dir = "LEFT";
 				}
 
 				if( typeof f === "object" ) {
@@ -352,7 +352,7 @@
 
 			query: function() {
 				if( global.join.length > 0 )
-					global.query += global.join.join();
+					global.query += global.join.join('');
 				if( global.where.length > 0 )
 					global.query += " WHERE " + global.where;
 				if( global.group.length > 0 )

@@ -1,6 +1,8 @@
 Monologue - Streamlined query building
 ======================================
 
+[![NPM](https://nodei.co/npm/monologue.png?compact=true)](https://nodei.co/npm/monologue/)
+
 **Breaking Changes for v0.3.0**
 
 Monologue now defaults to sanitizing strings inline as opposed to creating bound parameters.  This option can be changed by passing { escape: false } into monologue().
