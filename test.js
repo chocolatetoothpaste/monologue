@@ -23,8 +23,8 @@ exports.select = function(test) {
 	);
 
 	test.deepEqual(
-		monologue().select('username, email', 'users').where({"company_id": "1234"}).union('screename, email_address', 'app_users').where({"company":"coName"}).query().sql,
-		"SELECT username, email FROM users WHERE company_id = '1234' UNION SELECT screename, email_address FROM app_users WHERE company = 'coName'",
+		monologue().select(['username', 'email', 'first_name', 'last_name'], 'users').where({"company_id": "1234"}).union('screename, email_address', 'app_users').where({"company":"coName"}).query().sql,
+		"SELECT username, email, first_name, last_name FROM users WHERE company_id = '1234' UNION SELECT screename, email_address FROM app_users WHERE company = 'coName'",
 		"simple UNION with where clauses"
 	);
 
@@ -100,20 +100,46 @@ exports.join = function(test) {
 	var multi = monologue().select( "*", "users u" )
 		.join( "posts p", "p.user_id = u.id" )
 		.join( "INNER", "post_meta m", "m.post_id = p.id" )
-		.join( "comments c", "p.id = c.post_id" )
-		// .join( "posts p", "p.user_id = u.id" )
+		.join( "LEFT OUTER", "comments c", "p.id = c.post_id" )
 		.where( { "category": "67" } )
 		.query().sql;
 
 	test.deepEqual(
 		multi,
-		"SELECT * FROM users u LEFT JOIN posts p ON p.user_id = u.id INNER JOIN post_meta m ON m.post_id = p.id LEFT JOIN comments c ON p.id = c.post_id WHERE category = '67'",
+		"SELECT * FROM users u LEFT JOIN posts p ON p.user_id = u.id INNER JOIN post_meta m ON m.post_id = p.id LEFT OUTER JOIN comments c ON p.id = c.post_id WHERE category = '67'",
 		"Multiple JOINs"
 	);
 
-	console.log(multi);
+	test.done();
+};
+
+exports.injection = function(test) {
+	test.expect(2);
+
+	var inj = monologue()
+		.select(['email', 'password', 'full_name'], 'members')
+		.where({email: "x'; DROP TABLE members; --"})
+		.query().sql;
+
+	test.deepEqual(
+		inj,
+		"SELECT email, password, full_name FROM members WHERE email = 'x\\'; DROP TABLE members; --'",
+		"SQL Injection"
+	);
+
+	var whitespace = monologue()
+		.select('*', 'pages')
+		.where({title: '\n\t'})
+		.query().sql;
+
+	test.deepEqual(
+		whitespace,
+		"SELECT * FROM pages WHERE title = '\\n\\t'",
+		"Whitespace Characters"
+	);
 
 	test.done();
+
 };
 
 exports.file = function(test) {
