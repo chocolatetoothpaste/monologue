@@ -72,11 +72,11 @@
 			 */
 
 			join: function( dir, t, f ) {
-				// default to left join if unspecified
+				// default to inner join if unspecified (parity with mysql)
 				if( typeof f === "undefined" ) {
 					f = t;
 					t = dir;
-					dir = "LEFT";
+					dir = "INNER";
 				}
 
 				if( typeof f === "object" ) {
