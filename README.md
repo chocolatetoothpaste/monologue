@@ -13,6 +13,25 @@ The join function now defaults to INNER JOIN for parity with MYSQLs defaults
 
     npm install monologue
 
+**API**
+
+A new method has been introduced to deal with situations where backquoting is required.  An experimental approach was tested in previous versions where backquoting could be done inline, but this proved to be buggy and impossible to perform accurately.  However, you can now do it manually with monologue.backquote().  The method accepts 3 types of data: an array of column names, an object, or a string.  An array will result in each element being backquoted.  An object will return an array of backquoted keys.  A string will be returned backquoted.
+
+Example:
+
+    // result: [ '`email`', '`password`', '`type`' ]
+    monologue().backquote(['email', 'password', 'type']);
+
+    // result: [ '`pizza`', '`drink`', '`dessert`' ]
+    monologue().backquote({
+        pizza: "hawaiin bbq chicken",
+        drink: "chocolate milk",
+        dessert: "german chocolate cake"
+    });
+
+    // result: '`cupcake`'
+    monologue().backquote('cupcake');
+
 **Usage**
 
     var monologue = require('monologue');
@@ -21,7 +40,8 @@ The join function now defaults to INNER JOIN for parity with MYSQLs defaults
 
 
     // call the SQL wrappers in any order, see below: where, group, where, order
-    var mono = monologue().select( "*", "users")
+    var mono = monologue()
+        .select( "*", "users")
         .where( { "id": [1,2,3,4,5,6] } ) // alternative to where("id").in([...])
         .where( 'date_time' ).between( '2012-09-12', '2013-01-20')
         .group( ['type', 'hamster' ] )
@@ -37,7 +57,8 @@ The join function now defaults to INNER JOIN for parity with MYSQLs defaults
     // JOIN (default is inner):
     // SELECT * FROM users u INNER JOIN posts p ON p.user_id = u.id WHERE category = '67'
 
-    monologue().select( "*", "users u" )
+    monologue()
+        .select( "*", "users u" )
         .join( "posts p", "p.user_id = u.id" )
         .where( { "category": "67" } )
         .query().sql;
@@ -46,7 +67,8 @@ The join function now defaults to INNER JOIN for parity with MYSQLs defaults
     // JOIN (LEFT, as argument):
     // SELECT * FROM users u LEFT JOIN posts p ON p.user_id = u.id WHERE category = '67'
 
-    monologue().select( "*", "users u" )
+    monologue()
+        .select( "*", "users u" )
         .join( "LEFT", "posts p", { "p.user_id": "u.id" } )
         .where( { "category": "67" } )
         .query().sql;
@@ -56,7 +78,8 @@ The join function now defaults to INNER JOIN for parity with MYSQLs defaults
     // output: SELECT * FROM users WHERE company = 'general motors' INTO OUTFILE '/tmp/datafile' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' LINES TERMINATED BY '\n'
 
 
-    monologue().select( "*", "users" )
+    monologue()
+        .select( "*", "users" )
         .where( { "company": "general motors" } )
         .file( "/tmp/datafile", ",", '"', "\\n" )
         .query().sql;
@@ -65,7 +88,8 @@ The join function now defaults to INNER JOIN for parity with MYSQLs defaults
     // SELECT into outfile: without third param
     // output: SELECT * FROM users WHERE company = 'general motors' INTO OUTFILE '/tmp/datafile' FIELDS TERMINATED BY ','  LINES TERMINATED BY '\n'
 
-    monologue().select( "*", "users")
+    monologue()
+        .select( "*", "users")
         .where( { "company": "general motors" } )
         .file( "/tmp/datafile", ",", "\\n" )
         .query().sql;
@@ -74,31 +98,50 @@ The join function now defaults to INNER JOIN for parity with MYSQLs defaults
     // INSERT, passing an array of objects
     // output: INSERT INTO users (first_name, password, username) VALUES ('me','1234','test'),('pasta','abcd','example')
 
-    monologue().insert( 'users', [
-        { username: 'test', password: '1234', first_name: 'me' },
-        { username: 'example', password: 'abcd', first_name: "pasta" }
-    ] ).query().sql;
+    monologue()
+        .insert( 'users', [
+            { username: 'test', password: '1234', first_name: 'me' },
+            { username: 'example', password: 'abcd', first_name: "pasta" }
+        ] )
+        .query().sql;
 
 
     // INSERT, passing a single object
     // output: INSERT INTO users (first_name, password, username) VALUES ('cubert','abcd','me')
 
-    monologue().insert( 'users', { username: 'me', password: 'abcd', first_name: "cubert" } ).query().sql;
+    monologue()
+        .insert( 'users', {
+            username: 'me', password: 'abcd', first_name: "cubert"
+        } )
+        .query().sql;
 
 
     // UPDATE
     // output: UPDATE users SET email = 'some@email.com', password = 'abcdefg', username = 'yoyo' WHERE id = 23
 
-    monologue().update( "users", {username: "yoyo", email: 'some@email.com', password: "abcdefg"} ).where( {id: 23} ).query().sql;
+    monologue()
+        .update( "users", {username: "yoyo", email: 'some@email.com', password: "abcdefg"} )
+        .where( {id: 23} )
+        .query().sql;
 
 
     // DELETE
     // output: DELETE FROM users WHERE first_name = 'me' AND password = '1234' AND username = 'test'
 
-    monologue().delete( 'users', { username: 'test', password: '1234', first_name: "me" } ).query().sql;
+    monologue()
+        .delete( 'users', { username: 'test', password: '1234', first_name: "me" } )
+        .query().sql;
+
 
     // UNION
     // Wrappers can be out of order BEFORE the UNION statement,
     // wrappers after will be applied to the secondary statment
     // output: SELECT username, email FROM users WHERE company_id = '1234' UNION SELECT screename, email_address FROM app_users WHERE company = 'coName'
-    monologue().select('username, email', 'users').where({"company_id": "1234"}).union('screename, email_address', 'app_users').where({"company":"coName"}).query().sql
+
+    monologue()
+        .select('username, email', 'users')
+        .where({"company_id": "1234"})
+        .union('screename, email_address', 'app_users')
+        .where({"company":"coName"})
+        .query().sql
+

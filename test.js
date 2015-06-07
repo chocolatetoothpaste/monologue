@@ -165,3 +165,34 @@ exports.file = function(test) {
 
 	test.done();
 };
+
+
+exports.backquote = function(test) {
+	test.expect(3);
+
+	var q1 = monologue();
+
+	var obj = {
+		pizza: "hawaiin bbq chicken",
+		drink: "chocolate milk",
+		dessert: "german chocolate cake"
+	};
+
+	test.deepEqual(
+		q1.backquote(['email', 'password', 'type']),
+		[ '`email`', '`password`', '`type`' ]
+	);
+
+	test.deepEqual(
+		q1.backquote(obj),
+		[ '`pizza`', '`drink`', '`meat`' ]
+	);
+
+	test.deepEqual(
+		q1.backquote('cupcake'),
+		'`cupcake`'
+	);
+
+
+	test.done();
+};

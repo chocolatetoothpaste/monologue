@@ -2,7 +2,7 @@
 	"use strict";
 
 	function monologue(opt) {
-		var dict = { escape: true, quote: false };
+		var dict = { escape: true };
 
 		if( typeof opt === "undefined" ) {
 			opt = dict;
@@ -12,9 +12,6 @@
 				opt[i] = ( typeof opt[i] === "undefined" ? dict[i] : opt[i] );
 			}
 		}
-
-		// hard-coded prevention for now
-		opt.quote = false;
 
 		// semi-global object to contain query parts until they are compiled
 		var global = {
@@ -57,38 +54,38 @@
 			/**
 			 */
 
-			select: function( c, t ) {
-				if( Array.isArray( c ) )
-					c = c.join( ", " );
+			select: function( col, tbl ) {
+				if( Array.isArray( col ) )
+					col = col.join( ", " );
 
-				global.query = "SELECT " + c + " FROM " + t;
+				global.query = "SELECT " + col + " FROM " + tbl;
 
 				return this;
 			},
 
 
 			/**
-			 * direction, table, fields
+			 * direction, table, statement
 			 */
 
-			join: function( dir, t, f ) {
+			join: function( dir, tbl, stmt ) {
 				// default to inner join if unspecified (parity with mysql)
-				if( typeof f === "undefined" ) {
-					f = t;
-					t = dir;
+				if( typeof stmt === "undefined" ) {
+					stmt = tbl;
+					tbl = dir;
 					dir = "INNER";
 				}
 
-				if( typeof f === "object" ) {
+				if( typeof stmt === "object" ) {
 					var fields = [];
-					for( var ii in f ) {
-						fields.push( ii + " = " + f[ii] );
+					for( var ii in stmt ) {
+						fields.push( ii + " = " + stmt[ii] );
 					}
 
-					f = fields.join(" AND ");
+					stmt = fields.join(" AND ");
 				}
 
-				global.join.push( " " + dir + " JOIN " + t + " ON " + f );
+				global.join.push( " " + dir + " JOIN " + tbl + " ON " + stmt );
 
 				return this;
 			},
@@ -98,25 +95,25 @@
 			 * t: table, p: params
 			 */
 
-			insert: function( t, p ) {
+			insert: function( tbl, p ) {
+				var col = '';
+
 				// I don't know why this would ever NOT be the case
 				if( typeof p === "object" ) {
-					var c = [];
-
 					// if it's not a nested array, cheat and make it one
 					if( ! Array.isArray( p ) ) {
 						p = [p];
 					}
 
-					c = this.stringify( p, "");
-					c = "(" + c.shift() + ") VALUES " + c.join(',');
+					var a = this.stringify( p, "");
+					col = "(" + a.shift() + ") VALUES " + a.join(',');
 				}
 
 				else if( typeof p === "string" ) {
-					var c = p;
+					col = p;
 				}
 
-				global.query = "INSERT INTO " + t + " " + c;
+				global.query = "INSERT INTO " + tbl + " " + col;
 
 				return this;
 			},
@@ -126,21 +123,22 @@
 			 * t: table, p: params
 			 */
 
-			update: function( t, p ) {
+			update: function( tbl, p ) {
+				var col = '';
+
 				if( typeof p === "object" ) {
-					var c = this.stringify( p );
-					c = "SET " + c.join( ', ' );
+					col = "SET " + this.stringify( p ).join( ', ' );
 				}
 
 				else if( typeof p === "string" ) {
-					var c = p;
+					col = p;
 				}
 
 				else {
 					// throw error
 				}
 
-				global.query = "UPDATE " + t + " " + c;
+				global.query = "UPDATE " + tbl + " " + col;
 
 				return this;
 			},
@@ -149,32 +147,29 @@
 			/**
 			 */
 
-			delete: function( t, w ) {
-				global.query = "DELETE FROM " + t;
-				return ( w ? this.where( w ) : this );
+			delete: function( tbl, wh ) {
+				global.query = "DELETE FROM " + tbl;
+				return ( wh ? this.where( wh ) : this );
 			},
 
 
 			/**
-			 * w: where statement, s: separator
 			 */
 
-			where: function( w, s ) {
-				s = ( typeof s === "undefined" ? "AND" : s );
-				s = ( s.length > 0 ? " " + s + " " : s );
+			where: function( wh, sep ) {
+				sep = ( typeof sep === "undefined" ? "AND" : sep );
+				sep = ( sep.length > 0 ? " " + sep + " " : sep );
 
-				if( toString.call( w ) === "[object Object]" ) {
-					var crit = this.stringify( w );
-
+				if( toString.call( wh ) === "[object Object]" ) {
 					// stringify the where statements
-					w = crit.join( s );
+					wh = this.stringify( wh ).join( sep );
 				}
 
 				// check if a previous where statement has been set and glue it
 				// all together
 				global.where = ( global.where.length > 0
-					? global.where + s + w
-					: w );
+					? global.where + sep + wh
+					: wh );
 
 				return this;
 			},
@@ -184,10 +179,10 @@
 			 */
 
 			in: function( ins ) {
-				var i = this.stringify( ins, '' );
+				ins = this.stringify( ins, '' );
 
 				// returns "this"
-				return this.where( " IN (" + i + ")", "" );
+				return this.where( " IN (" + ins + ")", "" );
 			},
 
 
@@ -245,69 +240,64 @@
 
 
 			/**
-			 * g: group, d: direction
 			 */
 
-			group: function( g, d ) {
-				d = d || 'ASC';
+			group: function( grp, dir ) {
+				dir = dir || 'ASC';
 
-				if( Array.isArray( g ) )
-					g = g.join( ', ' );
+				if( Array.isArray( grp ) )
+					grp = grp.join( ', ' );
 
-				global.group.push( g + " " + d );
+				global.group.push( grp + " " + dir );
 
 				return this;
 			},
 
 
 			/**
-			 * h: having
 			 */
 
-			having: function( h, sep ) {
+			having: function( hav, sep ) {
 				sep = ( typeof sep === "undefined" ? "AND" : sep );
+				sep = ( sep.length > 0 ? " " + sep + " " : sep );
 
-				if( typeof h !== "string" ) {
-					var criteria = this.stringify(h);
-
+				if( typeof hav !== "string" ) {
 					// stringify the having statements
-					h = criteria.join( " " + sep + " " );
+					hav = this.stringify(hav).join( sep );
 				}
 
 				// check if a previous statement has been set and glue it
 				// all together
 				global.having = ( global.having.length > 0
-					? global.having + " " + sep + " " + h
-					: h );
+					? global.having + sep + hav
+					: hav );
 
 				return this;
 			},
 
 
 			/**
-			 * o: order, d: direction
 			 */
 
-			order: function( o, d ) {
-				d = d || 'ASC';
+			order: function( ord, dir ) {
+				dir = dir || 'ASC';
 
-				if( Array.isArray( o ) )
-					o = o.join( ', ' );
+				if( Array.isArray( ord ) )
+					ord = ord.join( ', ' );
 
-				global.order.push( o + " " + d );
+				global.order.push( ord + " " + dir );
 
 				return this;
 			},
 
 
 			/**
-			 * l: limit, o: offset
 			 */
 
-			limit: function( l, o ) {
-				global.limit = ( typeof o === "undefined"
-					? '' + l
-					: o + ", " + l );
+			limit: function( lim, off ) {
+				global.limit = ( typeof off === "undefined"
+					? '' + lim
+					: off + ", " + lim );
 				return this;
 			},
 
@@ -374,7 +364,7 @@
 
 			/**
 			 * Takes an object or and array of objects and builds a SQL string
-			 * p: params, s: separator, pre: bound param prefix
+			 * p: params, s: separator
 			 */
 
 			stringify: function( p, s ) {
@@ -390,11 +380,7 @@
 								// grab the column names from the first object
 								global.columns = Object.keys( p[0] ).sort();
 
-								var ret = ( opt.quote
-									? "`" + global.columns.join('`, `') + "`"
-									: global.columns.join(', ') )
-
-								c.push( ret );
+								c.push( global.columns.join(', ') );
 							}
 
 							c.push( "(" + this.stringify( p[ii], "" ) + ")");
@@ -413,9 +399,7 @@
 					for( var jj = 0, len = col.length; jj < len; ++jj ) {
 						// matching a column to a set, i.e. {id: [1,2,3,4]}
 						if( Array.isArray( p[col[jj]] ) ) {
-							var n = ( opt.quote
-								? '`' + col[jj] + '`'
-								: col[jj] )
+							var n = col[jj]
 								+ " IN (" + this.stringify( p[col[jj]] ) + ")";
 
 							c.push( n );
@@ -450,13 +434,27 @@
 					this.params[r] = v;
 				}
 
-				if( opt.quote ) {
-					k = '`' + k + '`';
+				// spit out the bound param name
+				return ( s.length > 0 ? k + " " + s + " " : '' ) + r;
+
+			},
+
+			backquote: function( col ) {
+				if( Array.isArray(col) ) {
+					return col.map(function(v) {
+							return '`' + v + '`';
+					});
 				}
 
-				// spit out the bound param name
-				return ( s.length > 0 ? "" + k + " " + s + " " : '' ) + r;
+				else if( col === Object(col) ){
+					return Object.keys(col).map(function(v) {
+							return '`' + v + '`';
+					});
+				}
 
+				else {
+					return '`' + col + '`';
+				}
 			},
 
 
