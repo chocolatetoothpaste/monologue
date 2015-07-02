@@ -14,7 +14,7 @@
 		}
 
 		// semi-global object to contain query parts until they are compiled
-		var global = {
+		var _g = {
 			query: '',
 			join: [],
 			where: '',
@@ -37,7 +37,7 @@
 			 */
 
 			reset: function() {
-				global = {
+				_g = {
 					query: '',
 					join: [],
 					where: '',
@@ -58,7 +58,7 @@
 				if( Array.isArray( col ) )
 					col = col.join( ", " );
 
-				global.query = "SELECT " + col + " FROM " + tbl;
+				_g.query = "SELECT " + col + " FROM " + tbl;
 
 				return this;
 			},
@@ -85,7 +85,7 @@
 					stmt = fields.join(" AND ");
 				}
 
-				global.join.push( " " + dir + " JOIN " + tbl + " ON " + stmt );
+				_g.join.push( " " + dir + " JOIN " + tbl + " ON " + stmt );
 
 				return this;
 			},
@@ -113,7 +113,7 @@
 					col = p;
 				}
 
-				global.query = "INSERT INTO " + tbl + " " + col;
+				_g.query = "INSERT INTO " + tbl + " " + col;
 
 				return this;
 			},
@@ -138,7 +138,7 @@
 					// throw error
 				}
 
-				global.query = "UPDATE " + tbl + " " + col;
+				_g.query = "UPDATE " + tbl + " " + col;
 
 				return this;
 			},
@@ -148,7 +148,7 @@
 			 */
 
 			delete: function( tbl, wh ) {
-				global.query = "DELETE FROM " + tbl;
+				_g.query = "DELETE FROM " + tbl;
 				return ( wh ? this.where( wh ) : this );
 			},
 
@@ -160,15 +160,15 @@
 				sep = ( typeof sep === "undefined" ? "AND" : sep );
 				sep = ( sep.length > 0 ? " " + sep + " " : sep );
 
-				if( toString.call( wh ) === "[object Object]" ) {
+				if( wh === Object(wh) ) {
 					// stringify the where statements
 					wh = this.stringify( wh ).join( sep );
 				}
 
 				// check if a previous where statement has been set and glue it
 				// all together
-				global.where = ( global.where.length > 0
-					? global.where + sep + wh
+				_g.where = ( _g.where.length > 0
+					? _g.where + sep + wh
 					: wh );
 
 				return this;
@@ -204,7 +204,7 @@
 					like = " LIKE :" + k;
 				}
 
-				global.where += like;
+				_g.where += like;
 
 				return this;
 			},
@@ -233,7 +233,7 @@
 					between = " BETWEEN :" + k1 + " AND :" + k2
 				}
 
-				global.where += between;
+				_g.where += between;
 
 				return this;
 			},
@@ -248,7 +248,7 @@
 				if( Array.isArray( grp ) )
 					grp = grp.join( ', ' );
 
-				global.group.push( grp + " " + dir );
+				_g.group.push( grp + " " + dir );
 
 				return this;
 			},
@@ -268,8 +268,8 @@
 
 				// check if a previous statement has been set and glue it
 				// all together
-				global.having = ( global.having.length > 0
-					? global.having + sep + hav
+				_g.having = ( _g.having.length > 0
+					? _g.having + sep + hav
 					: hav );
 
 				return this;
@@ -285,7 +285,7 @@
 				if( Array.isArray( ord ) )
 					ord = ord.join( ', ' );
 
-				global.order.push( ord + " " + dir );
+				_g.order.push( ord + " " + dir );
 
 				return this;
 			},
@@ -295,7 +295,7 @@
 			 */
 
 			limit: function( lim, off ) {
-				global.limit = ( typeof off === "undefined"
+				_g.limit = ( typeof off === "undefined"
 					? '' + lim
 					: off + ", " + lim );
 				return this;
@@ -310,7 +310,7 @@
 
 				this.reset();
 
-				global.query = sql += " UNION SELECT " + c + " FROM " + t;
+				_g.query = sql += " UNION SELECT " + c + " FROM " + t;
 
 				return this;
 			},
@@ -327,7 +327,7 @@
 					e = undefined;
 				}
 
-				global.last += " INTO OUTFILE '" + f
+				_g.last += " INTO OUTFILE '" + f
 					+ "' FIELDS TERMINATED BY '" + t + "' "
 					+ ( e ? "OPTIONALLY ENCLOSED BY '" + e + "'" : '' )
 					+ " LINES TERMINATED BY '" + l + "'";
@@ -341,22 +341,22 @@
 			 */
 
 			query: function() {
-				if( global.join.length > 0 )
-					global.query += global.join.join('');
-				if( global.where.length > 0 )
-					global.query += " WHERE " + global.where;
-				if( global.group.length > 0 )
-					global.query += " GROUP BY " + global.group.join(',');
-				if( global.having.length > 0 )
-					global.query += " HAVING " + global.having;
-				if( global.order.length > 0 )
-					global.query += " ORDER BY " + global.order.join(',');
-				if( global.limit.length > 0 )
-					global.query += " LIMIT " + global.limit;
-				if( global.last.length > 0 )
-					global.query += global.last;
+				if( _g.join.length > 0 )
+					_g.query += _g.join.join('');
+				if( _g.where.length > 0 )
+					_g.query += " WHERE " + _g.where;
+				if( _g.group.length > 0 )
+					_g.query += " GROUP BY " + _g.group.join(',');
+				if( _g.having.length > 0 )
+					_g.query += " HAVING " + _g.having;
+				if( _g.order.length > 0 )
+					_g.query += " ORDER BY " + _g.order.join(',');
+				if( _g.limit.length > 0 )
+					_g.query += " LIMIT " + _g.limit;
+				if( _g.last.length > 0 )
+					_g.query += _g.last;
 
-				this.sql = global.query;
+				this.sql = _g.query;
 
 				return this;
 			},
@@ -378,12 +378,15 @@
 						if( toString.call( p[ii] ) === "[object Object]" ) {
 							if( c.length === 0 ) {
 								// grab the column names from the first object
-								global.columns = Object.keys( p[0] ).sort();
+								_g.columns = Object.keys( p[0] ).sort();
 
-								c.push( global.columns.join(', ') );
+								c.push( _g.columns.join(', ') );
 							}
 
-							c.push( "(" + this.stringify( p[ii], "" ) + ")");
+							c.push( "("
+								+ this.stringify( p[ii], "" )
+								+ ")"
+							);
 						}
 
 						else {
@@ -394,13 +397,15 @@
 				}
 
 				else {
-					var col = global.columns || Object.keys( p ).sort();
+					var col = _g.columns || Object.keys( p ).sort();
 
 					for( var jj = 0, len = col.length; jj < len; ++jj ) {
 						// matching a column to a set, i.e. {id: [1,2,3,4]}
 						if( Array.isArray( p[col[jj]] ) ) {
 							var n = col[jj]
-								+ " IN (" + this.stringify( p[col[jj]] ) + ")";
+								+ " IN ("
+								+ this.stringify( p[col[jj]] )
+								+ ")";
 
 							c.push( n );
 						}
@@ -427,8 +432,8 @@
 				}
 				else {
 					// using an iterator for field names to avoid collisions
-					++global.itr;
-					r = ":mono_" + global.itr;
+					++_g.itr;
+					r = ":mono_" + _g.itr;
 
 					// add value to the param stack
 					this.params[r] = v;
@@ -437,24 +442,6 @@
 				// spit out the bound param name
 				return ( s.length > 0 ? k + " " + s + " " : '' ) + r;
 
-			},
-
-			backquote: function( col ) {
-				if( Array.isArray(col) ) {
-					return col.map(function(v) {
-							return '`' + v + '`';
-					});
-				}
-
-				else if( col === Object(col) ){
-					return Object.keys(col).map(function(v) {
-							return '`' + v + '`';
-					});
-				}
-
-				else {
-					return '`' + col + '`';
-				}
 			},
 
 
@@ -485,11 +472,31 @@
 				});
 
 				return "'" + v + "'";
+			},
+
+
+			backquote: function( col ) {
+				if( Array.isArray(col) ) {
+					return col.map(function(v) {
+							return '`' + v + '`';
+					});
+				}
+
+				else if( col === Object(col) ){
+					var ret = {};
+					for( var i in col ) {
+						ret['`' + i + '`'] = col[i];
+					}
+
+					return ret;
+				}
+
+				else {
+					return '`' + col + '`';
+				}
 			}
 		}
 	}
-
-	// exports = monologue;
 
 	if( typeof module !== "undefined" && module.exports ) {
 		module.exports = monologue;

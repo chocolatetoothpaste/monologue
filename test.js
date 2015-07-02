@@ -185,7 +185,11 @@ exports.backquote = function(test) {
 
 	test.deepEqual(
 		q1.backquote(obj),
-		[ '`pizza`', '`drink`', '`meat`' ]
+		{
+			'`pizza`': "hawaiin bbq chicken",
+			'`drink`': "chocolate milk",
+			'`dessert`': "german chocolate cake"
+		}
 	);
 
 	test.deepEqual(

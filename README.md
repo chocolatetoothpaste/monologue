@@ -3,11 +3,11 @@ Monologue - Streamlined query building
 
 [![NPM](https://nodei.co/npm/monologue.png?compact=true)](https://nodei.co/npm/monologue/)
 
-**Breaking Changes for v0.3.0**
+**Breaking Change**
 
-Monologue now defaults to sanitizing strings inline as opposed to creating bound parameters.  This option can be changed by passing { escape: false } into monologue().
+The behavior of monologue.backquote() was change for objects.  It now returns a copy of the object with the property names backquoted, rather than an array of the property names.  See examples below.
 
-The join function now defaults to INNER JOIN for parity with MYSQLs defaults
+No liability is assumed, test your SQL output THOROUGHLY!  It is possible bugs may exist which could result in unsafe SQL statements.  Please report bugs to the github repository
 
 **Install**
 
@@ -22,7 +22,7 @@ Example:
     // result: [ '`email`', '`password`', '`type`' ]
     monologue().backquote(['email', 'password', 'type']);
 
-    // result: [ '`pizza`', '`drink`', '`dessert`' ]
+    // result: { '`pizza`': "hawaiin bbq chicken", '`drink`': "chocolate milk", '`dessert`': "german chocolate cake" }
     monologue().backquote({
         pizza: "hawaiin bbq chicken",
         drink: "chocolate milk",
