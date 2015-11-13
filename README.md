@@ -5,9 +5,11 @@ Monologue - Streamlined query building
 
 **Breaking Change**
 
-The behavior of monologue.backquote() was change for objects.  It now returns a copy of the object with the property names backquoted, rather than an array of the property names.  See examples below.
+The behavior of monologue.backquote() was changed for objects in v0.4.0.  It now returns a copy of the object with the property names backquoted, rather than an array of the property names.  See examples below.
 
-No liability is assumed, test your SQL output THOROUGHLY!  It is possible bugs may exist which could result in unsafe SQL statements.  Please report bugs to the github repository
+Test your SQL output!  It is possible bugs may exist which could result in unsafe SQL statements.  Please report bugs to the github repository
+
+This library is not necessarily exhaustive in representing MySQL, so if there are language features you would like to see added, submit a request or pull request on github.
 
 **Install**
 

@@ -446,21 +446,21 @@
 
 
 			/**
-			 * Escape unsafe characters to avoid sql injection
+			 * Escape unsafe characters to prevent sql injection
 			 */
 
-			escape: function(v) {
-				if (v === undefined || v === null) {
+			escape: function( v ) {
+				if( v === undefined || v === null ) {
 					return 'NULL';
 				}
 
-				switch (typeof v) {
+				switch( typeof v ) {
 					case 'boolean': return (v) ? 'true' : 'false';
 					case 'number': return v + '';
 				}
 
-				v = v.replace(/[\0\n\r\b\t\\\'\"\x1a]/g, function(s) {
-					switch(s) {
+				v = v.replace( /[\0\n\r\b\t\\\'\"\x1a]/g, function( s ) {
+					switch( s ) {
 						case "\0": return "\\0";
 						case "\n": return "\\n";
 						case "\r": return "\\r";
@@ -478,17 +478,17 @@
 			backquote: function( col ) {
 				if( Array.isArray(col) ) {
 					return col.map(function(v) {
-							return '`' + v + '`';
+						return '`' + v + '`';
 					});
 				}
 
 				else if( col === Object(col) ){
-					var ret = {};
+					var obj = {};
 					for( var i in col ) {
-						ret['`' + i + '`'] = col[i];
+						obj['`' + i + '`'] = col[i];
 					}
 
-					return ret;
+					return obj;
 				}
 
 				else {
