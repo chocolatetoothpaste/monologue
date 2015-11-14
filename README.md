@@ -7,6 +7,8 @@ Monologue - Streamlined query building
 
 2 convenience functions, .and() and .or(), where added allowing you to avoid the somewhat awkward interface of .where() (passing "AND" or "OR" as the second param).  These methods can be used out of order just like any other, they are essentially just aliases to .where() that handle the "AND"/"OR" for you.
 
+monologue.where() was update to handle arrays as a grouping mechanism.  An array of objects will be separated by OR, where an objects properties will be separated by AND.  See examples below.
+
 **Breaking Change**
 
 The behavior of monologue.backquote() was changed for objects in v0.4.0.  It now returns a copy of the object with the property names backquoted, rather than an array of the property names.  See examples below.
@@ -41,6 +43,18 @@ Example:
 **Usage**
 
     var monologue = require('monologue');
+
+    // grouping of where statements, pay attention to how the objects are grouped and what the output becomes
+    // output: SELECT * FROM food WHERE type = 'junk' AND (chocolate = true AND flavor = 'sweet' OR caramel = true) OR (flavor = 'salty' AND peanuts = true)
+    monologue()
+        .select('*', 'food')
+        .where({type: 'junk'})
+        .and([
+            {flavor: 'sweet', chocolate: true},
+            {caramel: true}
+        ])
+        .or([ {flavor: 'salty', peanuts: true} ])
+        .query().sql
 
     // Less than basic SELECT statement
 

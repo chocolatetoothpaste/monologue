@@ -160,10 +160,21 @@
 				sep = ( typeof sep === "undefined" ? "AND" : sep );
 				sep = ( sep.length > 0 ? " " + sep + " " : sep );
 
-				if( wh === Object(wh) ) {
+				if( Array.isArray( wh ) ) {
+					wh.forEach(function(v, k, arr) {
+						arr[k] = this.stringify( v ).join(' AND ');
+					}.bind(this));
+
+					// join an array of objects with OR
+					wh = '(' + wh.join(' OR ') + ')';
+				}
+
+				else if( wh === Object(wh) ) {
 					// stringify the where statements
 					wh = this.stringify( wh ).join( sep );
 				}
+
+				// else wh is a string
 
 				// check if a previous where statement has been set and glue it
 				// all together

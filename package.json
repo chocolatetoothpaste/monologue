@@ -1,6 +1,6 @@
 {
   "name": "monologue",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "Streamlined MySQL query building",
   "main": "./monologue.js",
   "author": {
@@ -9,9 +9,13 @@
   },
   "keywords": [
     "mysql",
+    "database",
+    "db",
     "query",
     "sql",
-    "builder"
+    "builder",
+    "mariadb",
+    "query-builder"
   ],
   "repository": {
     "type": "git",

@@ -1,51 +1,85 @@
-var monologue = require('./monologue');
+var mono = require('./monologue');
 
 exports.select = function(test) {
-	test.expect(3);
 
 	test.deepEqual(
-		monologue().select( "*", "users")
+		mono().select( "*", "users")
 			.where( { "id": [1,2,3,4,5,6] } ) // alternative to where("id").in([...])
 			.and( 'date_time' ).between( '2012-09-12', '2013-01-20')
-			.group( ['type', 'hamster' ] )
-			.or( "name" ).like("ro%en") // out of order, also passing "OR" as separator
+			.group( ['type', 'hamster' ] ) // out of order, also passing "OR" as separator
 			.order( "id" )
+			.and({'monkey': 'see'}).or({'monkey': 'do'})
 			.limit( '300', 1000 )
+			.or( "name" ).like("ro%en")
 			.query().sql,
-		"SELECT * FROM users WHERE id IN (1,2,3,4,5,6) AND date_time BETWEEN '2012-09-12' AND '2013-01-20' OR name LIKE 'ro%en' GROUP BY type, hamster ASC ORDER BY id ASC LIMIT 1000, 300",
+		"SELECT * FROM users WHERE id IN (1,2,3,4,5,6) AND date_time BETWEEN "
+			+ "'2012-09-12' AND '2013-01-20' AND monkey = 'see' OR monkey = 'do'"
+			+ " OR name LIKE 'ro%en' GROUP BY type, hamster ASC ORDER BY id ASC "
+			+ "LIMIT 1000, 300",
 		"Complicated SELECT"
 	);
 
 	test.deepEqual(
-		monologue().select('id, username, password, sum(posts) as posts', 'users').where('status').in([4,15,3,9]).having('posts > 5').query().sql,
-		"SELECT id, username, password, sum(posts) as posts FROM users WHERE status IN (4,15,3,9) HAVING posts > 5",
+		mono()
+			.select('id, username, password, sum(posts) as posts', 'users')
+			.where('status')
+			.in([4,15,3,9])
+			.having('posts > 5')
+			.query().sql,
+		"SELECT id, username, password, sum(posts) as posts FROM users "
+			+ "WHERE status IN (4,15,3,9) HAVING posts > 5",
 		"SELECT with HAVING and .in()"
 	);
 
 	test.deepEqual(
-		monologue().select(['username', 'email', 'first_name', 'last_name'], 'users').where({"company_id": "1234"}).union('screename, email_address', 'app_users').where({"company":"coName"}).query().sql,
-		"SELECT username, email, first_name, last_name FROM users WHERE company_id = '1234' UNION SELECT screename, email_address FROM app_users WHERE company = 'coName'",
+		mono()
+			.select(['username', 'email', 'first_name', 'last_name'], 'users')
+			.where({"company_id": "1234"})
+			.union('screename, email_address', 'app_users')
+			.where({"company":"coName"})
+			.query().sql,
+		"SELECT username, email, first_name, last_name FROM users "
+			+ "WHERE company_id = '1234' UNION SELECT screename, email_address "
+			+ "FROM app_users WHERE company = 'coName'",
 		"simple UNION with where clauses"
+	);
+
+	test.deepEqual(
+		mono()
+			.select('*', 'food')
+			.where({type: 'junk'})
+			.and([{flavor: 'sweet', chocolate: true},{caramel: true}])
+			.or([{flavor: 'salty', peanuts: true}])
+			.query().sql,
+		"SELECT * FROM food WHERE type = 'junk' AND "
+			+ "(chocolate = true AND flavor = 'sweet' OR caramel = true) OR "
+			+ "(flavor = 'salty' AND peanuts = true)",
+		"parenthetical where statements"
 	);
 
 	test.done();
 };
 
 exports.insert = function(test) {
-	test.expect(2);
-
 	test.deepEqual(
-		monologue().insert( 'users', [
+		mono().insert( 'users', [
 			{ username: 'test', password: '1234', first_name: 'me' },
 			{ username: 'example', password: 'abcd', first_name: "pasta" }
 		] ).query().sql,
-		"INSERT INTO users (first_name, password, username) VALUES ('me','1234','test'),('pasta','abcd','example')",
+		"INSERT INTO users (first_name, password, username) "
+			+ "VALUES ('me','1234','test'),('pasta','abcd','example')",
 		"Multiple INSERTs"
 	);
 
 	test.deepEqual(
-		monologue().insert( 'users', { username: 'me', password: 'abcd', first_name: "cubert" } ).query().sql,
-		"INSERT INTO users (first_name, password, username) VALUES ('cubert','abcd','me')",
+		mono()
+			.insert( 'users', {
+				username: 'me',
+				password: 'abcd',
+				first_name: "cubert"
+			}).query().sql,
+		"INSERT INTO users (first_name, password, username) "
+			+ "VALUES ('cubert','abcd','me')",
 		"Single INSERT"
 	);
 
@@ -53,11 +87,19 @@ exports.insert = function(test) {
 };
 
 exports.update = function(test) {
-	test.expect(1);
-
 	test.deepEqual(
-		monologue().update( "users", {username: "yoyo", email: 'some@email.com', password: "abcdefg"} ).where( {id: 23, cupcake: 'chocolate'} ).query().sql,
-		"UPDATE users SET email = 'some@email.com', password = 'abcdefg', username = 'yoyo' WHERE cupcake = 'chocolate' AND id = 23",
+		mono()
+			.update( "users", {
+				username: "yoyo",
+				email: 'some@email.com',
+				password: "abcdefg"
+			}).where({
+				id: 23,
+				cupcake: 'chocolate'
+			})
+			.query().sql,
+		"UPDATE users SET email = 'some@email.com', password = 'abcdefg', "
+			+ "username = 'yoyo' WHERE cupcake = 'chocolate' AND id = 23",
 		"Simple UPDATE"
 	);
 
@@ -65,11 +107,15 @@ exports.update = function(test) {
 };
 
 exports.delete = function(test) {
-	test.expect(1);
-
 	test.deepEqual(
-		monologue().delete( 'users', { username: 'test', password: '1234', first_name: "me" } ).query().sql,
-		"DELETE FROM users WHERE first_name = 'me' AND password = '1234' AND username = 'test'",
+		mono()
+			.delete( 'users', {
+				username: 'test',
+				password: '1234',
+				first_name: "me"
+			}).query().sql,
+		"DELETE FROM users WHERE "
+			+ "first_name = 'me' AND password = '1234' AND username = 'test'",
 		"Simple DELETE"
 	);
 
@@ -77,27 +123,30 @@ exports.delete = function(test) {
 };
 
 exports.join = function(test) {
-	test.expect(3);
-
 	test.deepEqual(
-		monologue().select( "*", "users u" )
+		mono()
+			.select( "*", "users u" )
 			.join( "posts p", "p.user_id = u.id" )
-			.where( { "category": "67" } )
+			.where({
+				"category": "67"
+			})
 			.query().sql,
-		"SELECT * FROM users u INNER JOIN posts p ON p.user_id = u.id WHERE category = '67'",
+		"SELECT * FROM users u INNER JOIN posts p ON p.user_id = u.id "
+			+ "WHERE category = '67'",
 		"Default JOIN"
 	);
 
 	test.deepEqual(
-		monologue().select( "*", "users u" )
+		mono().select( "*", "users u" )
 			.join( "LEFT", "posts p", { "p.user_id": "u.id" } )
 			.where( { "category": "67" } )
 			.query().sql,
-		"SELECT * FROM users u LEFT JOIN posts p ON p.user_id = u.id WHERE category = '67'",
+		"SELECT * FROM users u LEFT JOIN posts p ON p.user_id = u.id "
+			+ "WHERE category = '67'",
 		"Specifying join type: LEFT JOIN"
 	);
 
-	var multi = monologue().select( "*", "users u" )
+	var multi = mono().select( "*", "users u" )
 		.join( "posts p", "p.user_id = u.id" )
 		.join( "LEFT", "post_meta m", "m.post_id = p.id" )
 		.join( "LEFT OUTER", "comments c", "p.id = c.post_id" )
@@ -106,7 +155,10 @@ exports.join = function(test) {
 
 	test.deepEqual(
 		multi,
-		"SELECT * FROM users u INNER JOIN posts p ON p.user_id = u.id LEFT JOIN post_meta m ON m.post_id = p.id LEFT OUTER JOIN comments c ON p.id = c.post_id WHERE category = '67'",
+		"SELECT * FROM users u INNER JOIN posts p ON p.user_id = u.id "
+			+ "LEFT JOIN post_meta m ON m.post_id = p.id "
+			+ "LEFT OUTER JOIN comments c ON p.id = c.post_id "
+			+ "WHERE category = '67'",
 		"Multiple JOINs"
 	);
 
@@ -114,20 +166,19 @@ exports.join = function(test) {
 };
 
 exports.injection = function(test) {
-	test.expect(2);
-
-	var inj = monologue()
+	var inj = mono()
 		.select(['email', 'password', 'full_name'], 'members')
 		.where({email: "x'; DROP TABLE members; --"})
 		.query().sql;
 
 	test.deepEqual(
 		inj,
-		"SELECT email, password, full_name FROM members WHERE email = 'x\\'; DROP TABLE members; --'",
+		"SELECT email, password, full_name FROM members WHERE email = 'x\\'; "
+			+ "DROP TABLE members; --'",
 		"SQL Injection"
 	);
 
-	var whitespace = monologue()
+	var whitespace = mono()
 		.select('*', 'pages')
 		.where({title: '\n\t'})
 		.query().sql;
@@ -143,23 +194,25 @@ exports.injection = function(test) {
 };
 
 exports.file = function(test) {
-	test.expect(2);
-
 	test.deepEqual(
-		monologue().select( "*", "users" )
+		mono().select( "*", "users" )
 			.where( { "company": "general motors" } )
 			.file( "/tmp/datafile", ",", '"', "\\n" )
 			.query().sql,
-		"SELECT * FROM users WHERE company = 'general motors' INTO OUTFILE '/tmp/datafile' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' LINES TERMINATED BY '\\n'",
+		"SELECT * FROM users WHERE company = 'general motors' "
+			+ "INTO OUTFILE '/tmp/datafile' FIELDS TERMINATED BY ',' "
+			+ "OPTIONALLY ENCLOSED BY '\"' LINES TERMINATED BY '\\n'",
 		"SELECT INTO FILE with ENCLOSED BY"
 	);
 
 	test.deepEqual(
-		monologue().select( "*", "users" )
+		mono().select( "*", "users" )
 			.where( { "company": "general motors" } )
 			.file( "/tmp/datafile", ",", "\\n" )
 			.query().sql,
-		"SELECT * FROM users WHERE company = 'general motors' INTO OUTFILE '/tmp/datafile' FIELDS TERMINATED BY ','  LINES TERMINATED BY '\\n'",
+		"SELECT * FROM users WHERE company = 'general motors' "
+			+ "INTO OUTFILE '/tmp/datafile' FIELDS TERMINATED BY ','  "
+			+ "LINES TERMINATED BY '\\n'",
 		"SELECT INTO FILE simple"
 	);
 
@@ -168,9 +221,7 @@ exports.file = function(test) {
 
 
 exports.backquote = function(test) {
-	test.expect(4);
-
-	var q1 = monologue();
+	var m = mono();
 
 	var obj = {
 		pizza: "hawaiin bbq chicken",
@@ -179,17 +230,25 @@ exports.backquote = function(test) {
 	};
 
 	test.deepEqual(
-		q1.backquote(['email', 'password', 'type']),
+		m.backquote(['email', 'password', 'type']),
 		[ '`email`', '`password`', '`type`' ]
 	);
 
 	test.deepEqual(
-		q1.backquote([{breakfast: ['bacon', 'eggs']}, {'lunch': 'sangwich'}, {'dinner': 'prime rib'}]),
-		[ {"`breakfast`": ['bacon', 'eggs']}, {'`lunch`': 'sangwich'}, {'`dinner`': 'prime rib'} ]
+		m.backquote([
+			{breakfast: ['bacon', 'eggs']},
+			{"lunch": 'sangwich'},
+			{"dinner": 'prime rib'}
+		]),
+		[
+			{"`breakfast`": ['bacon', 'eggs']},
+			{"`lunch`": 'sangwich'},
+			{"`dinner`": 'prime rib'}
+		]
 	);
 
 	test.deepEqual(
-		q1.backquote(obj),
+		m.backquote(obj),
 		{
 			'`pizza`': "hawaiin bbq chicken",
 			'`drink`': "chocolate milk",
@@ -198,7 +257,7 @@ exports.backquote = function(test) {
 	);
 
 	test.deepEqual(
-		q1.backquote('cupcake'),
+		m.backquote('cupcake'),
 		'`cupcake`'
 	);
 
