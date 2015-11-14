@@ -2,7 +2,7 @@
 	"use strict";
 
 	function monologue(opt) {
-		var dict = { escape: true };
+		var dict = { escape: true, sort: false };
 
 		if( typeof opt === "undefined" ) {
 			opt = dict;
@@ -397,7 +397,10 @@
 						if( toString.call( p[ii] ) === "[object Object]" ) {
 							if( c.length === 0 ) {
 								// grab the column names from the first object
-								_g.columns = Object.keys( p[0] ).sort();
+								_g.columns = Object.keys( p[0] );
+
+								if( opt.sort_keys )
+									_g.columns.sort();
 
 								c.push( _g.columns.join(', ') );
 							}
@@ -416,7 +419,12 @@
 				}
 
 				else {
-					var col = _g.columns || Object.keys( p ).sort();
+					var col = _g.columns || Object.keys( p );
+
+					// if _g.columns is set, it's already sorted (if sorting)
+					if( opt.sort_keys && typeof _g.columns === "undefined" ) {
+						col.sort();
+					}
 
 					for( var jj = 0, len = col.length; jj < len; ++jj ) {
 						// matching a column to a set, i.e. {id: [1,2,3,4]}

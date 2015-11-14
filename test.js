@@ -52,7 +52,7 @@ exports.select = function(test) {
 			.or([{flavor: 'salty', peanuts: true}])
 			.query().sql,
 		"SELECT * FROM food WHERE type = 'junk' AND "
-			+ "(chocolate = true AND flavor = 'sweet' OR caramel = true) OR "
+			+ "(flavor = 'sweet' AND chocolate = true OR caramel = true) OR "
 			+ "(flavor = 'salty' AND peanuts = true)",
 		"parenthetical where statements"
 	);
@@ -66,8 +66,8 @@ exports.insert = function(test) {
 			{ username: 'test', password: '1234', first_name: 'me' },
 			{ username: 'example', password: 'abcd', first_name: "pasta" }
 		] ).query().sql,
-		"INSERT INTO users (first_name, password, username) "
-			+ "VALUES ('me','1234','test'),('pasta','abcd','example')",
+		"INSERT INTO users (username, password, first_name) "
+			+ "VALUES ('test','1234','me'),('example','abcd','pasta')",
 		"Multiple INSERTs"
 	);
 
@@ -78,8 +78,8 @@ exports.insert = function(test) {
 				password: 'abcd',
 				first_name: "cubert"
 			}).query().sql,
-		"INSERT INTO users (first_name, password, username) "
-			+ "VALUES ('cubert','abcd','me')",
+		"INSERT INTO users (username, password, first_name) "
+			+ "VALUES ('me','abcd','cubert')",
 		"Single INSERT"
 	);
 
@@ -98,8 +98,8 @@ exports.update = function(test) {
 				cupcake: 'chocolate'
 			})
 			.query().sql,
-		"UPDATE users SET email = 'some@email.com', password = 'abcdefg', "
-			+ "username = 'yoyo' WHERE cupcake = 'chocolate' AND id = 23",
+		"UPDATE users SET username = 'yoyo', email = 'some@email.com', "
+			+ "password = 'abcdefg' WHERE id = 23 AND cupcake = 'chocolate'",
 		"Simple UPDATE"
 	);
 
@@ -115,7 +115,7 @@ exports.delete = function(test) {
 				first_name: "me"
 			}).query().sql,
 		"DELETE FROM users WHERE "
-			+ "first_name = 'me' AND password = '1234' AND username = 'test'",
+			+ "username = 'test' AND password = '1234' AND first_name = 'me'",
 		"Simple DELETE"
 	);
 
