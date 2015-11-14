@@ -56,8 +56,8 @@ exports.update = function(test) {
 	test.expect(1);
 
 	test.deepEqual(
-		monologue().update( "users", {username: "yoyo", email: 'some@email.com', password: "abcdefg"} ).where( {id: 23} ).query().sql,
-		"UPDATE users SET email = 'some@email.com', password = 'abcdefg', username = 'yoyo' WHERE id = 23",
+		monologue().update( "users", {username: "yoyo", email: 'some@email.com', password: "abcdefg"} ).where( {id: 23, cupcake: 'chocolate'} ).query().sql,
+		"UPDATE users SET email = 'some@email.com', password = 'abcdefg', username = 'yoyo' WHERE cupcake = 'chocolate' AND id = 23",
 		"Simple UPDATE"
 	);
 
@@ -168,7 +168,7 @@ exports.file = function(test) {
 
 
 exports.backquote = function(test) {
-	test.expect(3);
+	test.expect(4);
 
 	var q1 = monologue();
 
@@ -181,6 +181,11 @@ exports.backquote = function(test) {
 	test.deepEqual(
 		q1.backquote(['email', 'password', 'type']),
 		[ '`email`', '`password`', '`type`' ]
+	);
+
+	test.deepEqual(
+		q1.backquote([{breakfast: ['bacon', 'eggs']}, {'lunch': 'sangwich'}, {'dinner': 'prime rib'}]),
+		[ {"`breakfast`": ['bacon', 'eggs']}, {'`lunch`': 'sangwich'}, {'`dinner`': 'prime rib'} ]
 	);
 
 	test.deepEqual(

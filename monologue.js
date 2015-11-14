@@ -478,8 +478,13 @@
 			backquote: function( col ) {
 				if( Array.isArray(col) ) {
 					return col.map(function(v) {
-						return '`' + v + '`';
-					});
+						return ( typeof v === 'object'
+							? this.backquote(v)
+							: '`' + v + '`'
+						);
+					// maintaining execution scope to avoid setting a var
+					// (can't wait to upgrade node 4+)
+					}.bind(this));
 				}
 
 				else if( col === Object(col) ){
@@ -497,6 +502,8 @@
 			}
 		}
 	}
+
+
 
 	if( typeof module !== "undefined" && module.exports ) {
 		module.exports = monologue;
