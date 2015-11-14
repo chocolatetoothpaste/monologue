@@ -6,9 +6,9 @@ exports.select = function(test) {
 	test.deepEqual(
 		monologue().select( "*", "users")
 			.where( { "id": [1,2,3,4,5,6] } ) // alternative to where("id").in([...])
-			.where( 'date_time' ).between( '2012-09-12', '2013-01-20')
+			.and( 'date_time' ).between( '2012-09-12', '2013-01-20')
 			.group( ['type', 'hamster' ] )
-			.where( "name", "OR" ).like("ro%en") // out of order, also passing "OR" as separator
+			.or( "name" ).like("ro%en") // out of order, also passing "OR" as separator
 			.order( "id" )
 			.limit( '300', 1000 )
 			.query().sql,

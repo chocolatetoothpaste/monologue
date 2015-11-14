@@ -174,6 +174,14 @@
 				return this;
 			},
 
+			and: function( wh ) {
+				return this.where( wh, 'AND' );
+			},
+
+			or: function( wh ) {
+				return this.where( wh, 'OR' );
+			},
+
 
 			/**
 			 */
@@ -502,8 +510,6 @@
 			}
 		}
 	}
-
-
 
 	if( typeof module !== "undefined" && module.exports ) {
 		module.exports = monologue;

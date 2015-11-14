@@ -3,6 +3,10 @@ Monologue - Streamlined query building
 
 [![NPM](https://nodei.co/npm/monologue.png?compact=true)](https://nodei.co/npm/monologue/)
 
+**Cool New Features**
+
+2 convenience functions, .and() and .or(), where added allowing you to avoid the somewhat awkward interface of .where() (passing "AND" or "OR" as the second param).  These methods can be used out of order just like any other, they are essentially just aliases to .where() that handle the "AND"/"OR" for you.
+
 **Breaking Change**
 
 The behavior of monologue.backquote() was changed for objects in v0.4.0.  It now returns a copy of the object with the property names backquoted, rather than an array of the property names.  See examples below.
@@ -45,9 +49,9 @@ Example:
     var mono = monologue()
         .select( "*", "users")
         .where( { "id": [1,2,3,4,5,6] } ) // alternative to where("id").in([...])
-        .where( 'date_time' ).between( '2012-09-12', '2013-01-20')
+        .and( 'date_time' ).between( '2012-09-12', '2013-01-20')
         .group( ['type', 'hamster' ] )
-        .where( "name", "OR" ).like("ro%en") // out of order, also passing "OR" as separator
+        .or( "name" ).like("ro%en") // out of order, also passing "OR" as separator
         .order( "id" )
         .limit( '300', 1000 )
         .query();
