@@ -3,19 +3,15 @@ Monologue - Streamlined query building
 
 [![NPM](https://nodei.co/npm/monologue.png?compact=true)](https://nodei.co/npm/monologue/)
 
+**Breaking Change Coming**
+
+Bound parameter-style queries will be removed in 0.5.0.  Documentation has been removed for quite a while, so this should affect very few, if any, users.
+
 **Cool New Features**
 
 2 convenience functions, .and() and .or(), where added allowing you to avoid the somewhat awkward interface of .where() (passing "AND" or "OR" as the second param).  These methods can be used out of order just like any other, they are essentially just aliases to .where() that handle the "AND"/"OR" for you.
 
-monologue.where() was update to handle arrays as a grouping mechanism.  An array of objects will be separated by OR, where an objects properties will be separated by AND.  See examples below.
-
-**Breaking Change**
-
-The behavior of monologue.backquote() was changed for objects in v0.4.0.  It now returns a copy of the object with the property names backquoted, rather than an array of the property names.  See examples below.
-
-Test your SQL output!  It is possible bugs may exist which could result in unsafe SQL statements.  Please report bugs to the github repository
-
-This library is not necessarily exhaustive in representing MySQL, so if there are language features you would like to see added, submit a request or pull request on github.
+monologue.where() was updated to handle arrays as a grouping mechanism.  An array of objects will be separated by OR, where an objects properties will be separated by AND.  See examples below.
 
 **Install**
 

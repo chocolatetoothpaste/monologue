@@ -2,7 +2,7 @@
 	"use strict";
 
 	function monologue(opt) {
-		var dict = { escape: true, sort: false };
+		var dict = { escape: true, sort_keys: false };
 
 		if( typeof opt === "undefined" ) {
 			opt = dict;
@@ -482,7 +482,7 @@
 				}
 
 				switch( typeof v ) {
-					case 'boolean': return (v) ? 'true' : 'false';
+					case 'boolean': return (v ? 'true' : 'false');
 					case 'number': return v + '';
 				}
 

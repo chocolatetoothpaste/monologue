@@ -44,13 +44,17 @@ exports.select = function(test) {
 		"simple UNION with where clauses"
 	);
 
+	var where = mono()
+		.select('*', 'food')
+		.where({type: 'junk'})
+		.and([{flavor: 'sweet', chocolate: true},{caramel: true}])
+		.or([{flavor: 'salty', peanuts: true}])
+		.query().sql
+
+	// console.log(where);
+
 	test.deepEqual(
-		mono()
-			.select('*', 'food')
-			.where({type: 'junk'})
-			.and([{flavor: 'sweet', chocolate: true},{caramel: true}])
-			.or([{flavor: 'salty', peanuts: true}])
-			.query().sql,
+		where,
 		"SELECT * FROM food WHERE type = 'junk' AND "
 			+ "(flavor = 'sweet' AND chocolate = true OR caramel = true) OR "
 			+ "(flavor = 'salty' AND peanuts = true)",
