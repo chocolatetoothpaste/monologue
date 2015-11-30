@@ -5,12 +5,12 @@ exports.select = function(test) {
 	test.deepEqual(
 		mono().select( "*", "users")
 			.where( { "id": [1,2,3,4,5,6] } ) // alternative to where("id").in([...])
-			.and( 'date_time' ).between( '2012-09-12', '2013-01-20')
+			.and( '`date_time`' ).between( '2012-09-12', '2013-01-20')
 			.group( ['type', 'hamster' ] ) // out of order, also passing "OR" as separator
 			.order( "id" )
 			.and({'monkey': 'see'}).or({'monkey': 'do'})
 			.limit( '300', 1000 )
-			.or( "name" ).like("ro%en")
+			.or( "`name`" ).like("ro%en")
 			.query().sql,
 		"SELECT * FROM users WHERE `id` IN (1,2,3,4,5,6) AND `date_time` BETWEEN "
 			+ "'2012-09-12' AND '2013-01-20' AND `monkey` = 'see' OR `monkey` = 'do'"
