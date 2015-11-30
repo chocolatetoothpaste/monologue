@@ -244,6 +244,10 @@ Monologue.prototype.between = function between( one, two ) {
 Monologue.prototype.group = function group( grp, dir ) {
 	dir = dir || 'ASC';
 
+	if( opt.backquote ) {
+		grp = this.backquote(grp);
+	}
+
 	if( Array.isArray( grp ) )
 		grp = grp.join( ', ' );
 
@@ -265,8 +269,7 @@ Monologue.prototype.having = function having( hav, sep ) {
 		hav = this.stringify(hav).join( sep );
 	}
 
-	// check if a previous statement has been set and glue it
-	// all together
+	// check if a previous statement has been set and glue it all together
 	this.parts.having = ( this.parts.having.length > 0
 		? this.parts.having + sep + hav
 		: hav );
@@ -280,6 +283,10 @@ Monologue.prototype.having = function having( hav, sep ) {
 
 Monologue.prototype.order = function order( ord, dir ) {
 	dir = dir || 'ASC';
+
+	if( opt.backquote ) {
+		ord = this.backquote(ord);
+	}
 
 	if( Array.isArray( ord ) )
 		ord = ord.join( ', ' );
@@ -302,6 +309,10 @@ Monologue.prototype.limit = function limit( lim, off ) {
 
 
 Monologue.prototype.union = function union( c, t ) {
+	if( opt.backquote && c !== '*' ) {
+		c = this.backquote(c);
+	}
+
 	if( Array.isArray( c ) )
 		c = c.join( ", " );
 

@@ -14,7 +14,7 @@ exports.select = function(test) {
 			.query().sql,
 		"SELECT * FROM users WHERE `id` IN (1,2,3,4,5,6) AND `date_time` BETWEEN "
 			+ "'2012-09-12' AND '2013-01-20' AND `monkey` = 'see' OR `monkey` = 'do'"
-			+ " OR `name` LIKE 'ro%en' GROUP BY type, hamster ASC ORDER BY id ASC "
+			+ " OR `name` LIKE 'ro%en' GROUP BY `type`, `hamster` ASC ORDER BY `id` ASC "
 			+ "LIMIT 1000, 300",
 		"Complicated SELECT"
 	);
@@ -35,11 +35,12 @@ exports.select = function(test) {
 		mono()
 			.select(['username', 'email', 'first_name', 'last_name'], 'users')
 			.where({"company_id": "1234"})
-			.union('screename, email_address', 'app_users')
+			.union(['screename', 'email_address','firstName','lastName'], 'app_users')
 			.where({"company":"coName"})
 			.query().sql,
 		"SELECT `username`, `email`, `first_name`, `last_name` FROM users "
-			+ "WHERE `company_id` = '1234' UNION SELECT screename, email_address "
+			+ "WHERE `company_id` = '1234' "
+			+ "UNION SELECT `screename`, `email_address`, `firstName`, `lastName` "
 			+ "FROM app_users WHERE `company` = 'coName'",
 		"simple UNION with where clauses"
 	);
