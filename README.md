@@ -3,29 +3,17 @@ Monologue - Streamlined query building
 
 [![NPM](https://nodei.co/npm/monologue.png?compact=true)](https://nodei.co/npm/monologue/)
 
-**Security Notice Breaking Changes**
+**Security Notice & Breaking Changes**
 
-In previous versions, monologue did not automatically escape column names, only values.  So unless you were using monologue().backquote(), your queries may be at risk.  Column names are now automatically backquoted, so check your query output to make sure it doesn't break anything.  This can be disabled by passing an option like this: monologue({backquote: false}).  Please note, if you are constructing your own key/value pair (for a where clause, as an example), you'll want to use the backquote() and escape() methods to properly escape your data.
+* In previous versions, monologue did not automatically escape column names, only values.  So unless you were using `monologue().backquote()`, your queries may be at risk.  Column names are now automatically backquoted, so check your query output to make sure it doesn't break anything.  This can be disabled by passing an option like this: `monologue({backquote: false})`.
 
-Bound parameter-style queries have been since in 0.5.0.  Documentation has been removed for quite a while, so this should affect very few, if any, users.
+* Bound parameter-style queries have been removed since in 0.5.0.  Documentation has been removed for quite a while, so this should affect very few, if any, users.
 
-In previous versions, when doing multiple inserts the (array of objects), the object keys were sorted.  Instead of doing this automatically, it is now optional and defaults to not sorting.  This will make the output of the query more predictable.  If you would like to enable sorting, you can pass monologue({sort_keys: true}) as an option.  It is not necessary to sort keys, monologue puts your insert statements in the correct order (based on the order of the first object in the collection), the option is there purely for unit testing compatibility and for analyzing output in testing.
+* In previous versions, when doing multiple inserts(array of objects) the object keys were sorted alphabetically.  Instead of doing this automatically, it is now optional and defaults to not sorting.  This will make the output of the query more predictable based on input.  If you would like to enable sorting, you can pass `monologue({sort_keys: true})` as an option.  It is not necessary to sort keys, monologue puts your insert statements in the correct order (based on the order of the first object in the collection), but the option is there for unit testing compatibility and for analyzing output in testing.
 
-**Cool New Features**
+#API
 
-2 convenience functions, .and() and .or(), where added allowing you to avoid the somewhat awkward interface of .where() (passing "AND" or "OR" as the second param).  These methods can be used out of order just like any other, they are essentially just aliases to .where() that handle the "AND"/"OR" for you.
-
-monologue.where() was updated to handle arrays as a grouping mechanism.  An array of objects will be separated by OR, where an objects properties will be separated by AND.  See examples below.
-
-**Install**
-
-    npm install monologue
-
-**API**
-
-A new method has been introduced to deal with situations where backquoting is required.  An experimental approach was tested in previous versions where backquoting could be done inline, but this proved to be buggy and impossible to perform accurately.  However, you can now do it manually with monologue.backquote().  The method accepts 3 types of data: an array of column names, an object, or a string.  An array will result in each element being backquoted.  An object will return an array of backquoted keys.  A string will be returned backquoted.
-
-Example:
+This area needs a ton of work.  You can get some great examples in the section by the same name.  For now, here's a quick rundown of `monologue().backquote()`:
 
     // result: [ '`email`', '`password`', '`type`' ]
     monologue().backquote(['email', 'password', 'type']);
@@ -40,7 +28,7 @@ Example:
     // result: '`cupcake`'
     monologue().backquote('cupcake');
 
-**Usage**
+#Examples
 
     var monologue = require('monologue');
 
