@@ -12,15 +12,15 @@ exports.select = function(test) {
 			.limit( '300', 1000 )
 			.or( "name" ).like("ro%en")
 			.query().sql,
-		"SELECT * FROM users WHERE id IN (1,2,3,4,5,6) AND date_time BETWEEN "
-			+ "'2012-09-12' AND '2013-01-20' AND monkey = 'see' OR monkey = 'do'"
-			+ " OR name LIKE 'ro%en' GROUP BY type, hamster ASC ORDER BY id ASC "
+		"SELECT * FROM users WHERE `id` IN (1,2,3,4,5,6) AND `date_time` BETWEEN "
+			+ "'2012-09-12' AND '2013-01-20' AND `monkey` = 'see' OR `monkey` = 'do'"
+			+ " OR `name` LIKE 'ro%en' GROUP BY type, hamster ASC ORDER BY id ASC "
 			+ "LIMIT 1000, 300",
 		"Complicated SELECT"
 	);
 
 	test.deepEqual(
-		mono()
+		mono({backquote: false})
 			.select('id, username, password, sum(posts) as posts', 'users')
 			.where('status')
 			.in([4,15,3,9])
@@ -38,26 +38,22 @@ exports.select = function(test) {
 			.union('screename, email_address', 'app_users')
 			.where({"company":"coName"})
 			.query().sql,
-		"SELECT username, email, first_name, last_name FROM users "
-			+ "WHERE company_id = '1234' UNION SELECT screename, email_address "
-			+ "FROM app_users WHERE company = 'coName'",
+		"SELECT `username`, `email`, `first_name`, `last_name` FROM users "
+			+ "WHERE `company_id` = '1234' UNION SELECT screename, email_address "
+			+ "FROM app_users WHERE `company` = 'coName'",
 		"simple UNION with where clauses"
 	);
 
-	var where = mono()
+	test.deepEqual(
+		mono()
 		.select('*', 'food')
 		.where({type: 'junk'})
 		.and([{flavor: 'sweet', chocolate: true},{caramel: true}])
 		.or([{flavor: 'salty', peanuts: true}])
-		.query().sql
-
-	// console.log(where);
-
-	test.deepEqual(
-		where,
-		"SELECT * FROM food WHERE type = 'junk' AND "
-			+ "(flavor = 'sweet' AND chocolate = true OR caramel = true) OR "
-			+ "(flavor = 'salty' AND peanuts = true)",
+		.query().sql,
+		"SELECT * FROM food WHERE `type` = 'junk' AND "
+			+ "(`flavor` = 'sweet' AND `chocolate` = true OR `caramel` = true) OR "
+			+ "(`flavor` = 'salty' AND `peanuts` = true)",
 		"parenthetical where statements"
 	);
 
@@ -66,12 +62,13 @@ exports.select = function(test) {
 
 exports.insert = function(test) {
 	test.deepEqual(
-		mono().insert( 'users', [
-			{ username: 'test', password: '1234', first_name: 'me' },
-			{ username: 'example', password: 'abcd', first_name: "pasta" }
+		mono({sort_keys: false}).insert( 'users', [
+			{ username: 'test', password: '1234', first_name: 'bob' },
+			{ password: 'abcd', username: 'geo23', first_name: "george" },
+			{ first_name: "rudy", password: 'sh1r3l1ng', username: 'rudedude' }
 		] ).query().sql,
 		"INSERT INTO users (username, password, first_name) "
-			+ "VALUES ('test','1234','me'),('example','abcd','pasta')",
+			+ "VALUES ('test','1234','bob'),('geo23','abcd','george'),('rudedude','sh1r3l1ng','rudy')",
 		"Multiple INSERTs"
 	);
 
@@ -92,7 +89,7 @@ exports.insert = function(test) {
 
 exports.update = function(test) {
 	test.deepEqual(
-		mono()
+		mono({backquote: false})
 			.update( "users", {
 				username: "yoyo",
 				email: 'some@email.com',
@@ -112,7 +109,7 @@ exports.update = function(test) {
 
 exports.delete = function(test) {
 	test.deepEqual(
-		mono()
+		mono({backquote: false})
 			.delete( 'users', {
 				username: 'test',
 				password: '1234',
@@ -128,7 +125,7 @@ exports.delete = function(test) {
 
 exports.join = function(test) {
 	test.deepEqual(
-		mono()
+		mono({backquote: false})
 			.select( "*", "users u" )
 			.join( "posts p", "p.user_id = u.id" )
 			.where({
@@ -141,7 +138,7 @@ exports.join = function(test) {
 	);
 
 	test.deepEqual(
-		mono().select( "*", "users u" )
+		mono({backquote: false}).select( "*", "users u" )
 			.join( "LEFT", "posts p", { "p.user_id": "u.id" } )
 			.where( { "category": "67" } )
 			.query().sql,
@@ -150,7 +147,7 @@ exports.join = function(test) {
 		"Specifying join type: LEFT JOIN"
 	);
 
-	var multi = mono().select( "*", "users u" )
+	var multi = mono({backquote: false}).select( "*", "users u" )
 		.join( "posts p", "p.user_id = u.id" )
 		.join( "LEFT", "post_meta m", "m.post_id = p.id" )
 		.join( "LEFT OUTER", "comments c", "p.id = c.post_id" )
@@ -170,26 +167,28 @@ exports.join = function(test) {
 };
 
 exports.injection = function(test) {
-	var inj = mono()
+	test.deepEqual(mono()
 		.select(['email', 'password', 'full_name'], 'members')
 		.where({email: "x'; DROP TABLE members; --"})
-		.query().sql;
-
-	test.deepEqual(
-		inj,
-		"SELECT email, password, full_name FROM members WHERE email = 'x\\'; "
+		.query().sql,
+		"SELECT `email`, `password`, `full_name` FROM members WHERE `email` = 'x\\'; "
 			+ "DROP TABLE members; --'",
 		"SQL Injection"
 	);
 
-	var whitespace = mono()
+	test.deepEqual(mono()
+		.select(['username', 'password', 'type'], 'users')
+		.where({"1 = 1--": ""})
+		.query().sql,
+		"SELECT `username`, `password`, `type` FROM users WHERE `1 = 1--` = ''",
+		"JS Key Injection"
+	);
+
+	test.deepEqual(mono()
 		.select('*', 'pages')
 		.where({title: '\n\t'})
-		.query().sql;
-
-	test.deepEqual(
-		whitespace,
-		"SELECT * FROM pages WHERE title = '\\n\\t'",
+		.query().sql,
+		"SELECT * FROM pages WHERE `title` = '\\n\\t'",
 		"Whitespace Characters"
 	);
 
@@ -203,7 +202,7 @@ exports.file = function(test) {
 			.where( { "company": "general motors" } )
 			.file( "/tmp/datafile", ",", '"', "\\n" )
 			.query().sql,
-		"SELECT * FROM users WHERE company = 'general motors' "
+		"SELECT * FROM users WHERE `company` = 'general motors' "
 			+ "INTO OUTFILE '/tmp/datafile' FIELDS TERMINATED BY ',' "
 			+ "OPTIONALLY ENCLOSED BY '\"' LINES TERMINATED BY '\\n'",
 		"SELECT INTO FILE with ENCLOSED BY"
@@ -214,7 +213,7 @@ exports.file = function(test) {
 			.where( { "company": "general motors" } )
 			.file( "/tmp/datafile", ",", "\\n" )
 			.query().sql,
-		"SELECT * FROM users WHERE company = 'general motors' "
+		"SELECT * FROM users WHERE `company` = 'general motors' "
 			+ "INTO OUTFILE '/tmp/datafile' FIELDS TERMINATED BY ','  "
 			+ "LINES TERMINATED BY '\\n'",
 		"SELECT INTO FILE simple"

@@ -3,9 +3,13 @@ Monologue - Streamlined query building
 
 [![NPM](https://nodei.co/npm/monologue.png?compact=true)](https://nodei.co/npm/monologue/)
 
-**Breaking Change Coming**
+**Security Notice Breaking Changes**
 
-Bound parameter-style queries will be removed in 0.5.0.  Documentation has been removed for quite a while, so this should affect very few, if any, users.
+In previous versions, monologue did not automatically escape column names, only values.  So unless you were using monologue().backquote(), your queries may be at risk.  Column names are now automatically backquoted, so check your query output to make sure it doesn't break anything.  This can be disabled by passing an option like this: monologue({backquote: false}).  Please note, if you are constructing your own key/value pair (for a where clause, as an example), you'll want to use the backquote() and escape() methods to properly escape your data.
+
+Bound parameter-style queries have been since in 0.5.0.  Documentation has been removed for quite a while, so this should affect very few, if any, users.
+
+In previous versions, when doing multiple inserts the (array of objects), the object keys were sorted.  Instead of doing this automatically, it is now optional and defaults to not sorting.  This will make the output of the query more predictable.  If you would like to enable sorting, you can pass monologue({sort_keys: true}) as an option.  It is not necessary to sort keys, monologue puts your insert statements in the correct order (based on the order of the first object in the collection), the option is there purely for unit testing compatibility and for analyzing output in testing.
 
 **Cool New Features**
 
