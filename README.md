@@ -5,7 +5,7 @@ Monologue - Streamlined query building
 
 **Security Notice & Breaking Changes**
 
-* In previous versions, monologue did not automatically escape column names, only values.  So unless you were using `monologue().backquote()`, your queries may be at risk.  Column names are now automatically backquoted, so check your query output to make sure it doesn't break anything.  This can be disabled by passing an option like this: `monologue({backquote: false})`.
+* In previous versions, monologue did not automatically escape column names (or table names), only values.  So unless you were using `monologue().backquote()`, your queries may be at risk.  Column names and table names are now automatically backquoted, so check your query output to make sure it doesn't break anything.  This can be disabled by passing an option like this: `monologue({backquote: false})`.
 
 * Bound parameter-style queries have been removed since in 0.5.0.  Documentation has been removed for quite a while, so this should affect very few, if any, users.
 

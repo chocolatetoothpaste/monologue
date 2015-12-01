@@ -51,8 +51,10 @@ Monologue.prototype.reset = function reset() {
  */
 
 Monologue.prototype.select = function select( col, tbl ) {
-	if( opt.backquote && col !== '*' ) {
-		col = this.backquote(col);
+	if( opt.backquote ) {
+		tbl = this.backquote(tbl);
+
+		if( col !== '*' ) col = this.backquote(col);
 	}
 
 	if( Array.isArray( col ) )
@@ -76,7 +78,15 @@ Monologue.prototype.join = function join( dir, tbl, stmt ) {
 		dir = "INNER";
 	}
 
+	if( opt.backquote ) {
+		tbl = this.backquote(tbl);
+	}
+
 	if( typeof stmt === "object" ) {
+		if( opt.backquote ) {
+			stmt = this.backquote(stmt);
+		}
+
 		var fields = [];
 		for( var ii in stmt ) {
 			fields.push( ii + " = " + stmt[ii] );
@@ -97,6 +107,10 @@ Monologue.prototype.join = function join( dir, tbl, stmt ) {
 
 Monologue.prototype.insert = function insert( tbl, p ) {
 	var col = '';
+
+	if( opt.backquote ) {
+		tbl = this.backquote(tbl);
+	}
 
 	// I don't know why this would ever NOT be the case
 	if( typeof p === "object" ) {
@@ -126,6 +140,10 @@ Monologue.prototype.insert = function insert( tbl, p ) {
 Monologue.prototype.update = function update( tbl, p ) {
 	var col = '';
 
+	if( opt.backquote ) {
+		tbl = this.backquote(tbl);
+	}
+
 	if( typeof p === "object" ) {
 		col = "SET " + this.stringify( p ).join( ', ' );
 	}
@@ -147,7 +165,11 @@ Monologue.prototype.update = function update( tbl, p ) {
 /**
  */
 
-Monologue.prototype.delete = function del( tbl, wh ) {
+Monologue.prototype.delete = function _delete( tbl, wh ) {
+	if( opt.backquote ) {
+		tbl = this.backquote(tbl);
+	}
+
 	this.parts.query = "DELETE FROM " + tbl;
 	return ( wh ? this.where( wh ) : this );
 };
@@ -303,14 +325,17 @@ Monologue.prototype.order = function order( ord, dir ) {
 Monologue.prototype.limit = function limit( lim, off ) {
 	this.parts.limit = ( typeof off === "undefined"
 		? '' + lim
-		: off + ", " + lim );
+		: lim + ' OFFSET ' + off );
+		// : off + ", " + lim );
 	return this;
 };
 
 
 Monologue.prototype.union = function union( c, t ) {
-	if( opt.backquote && c !== '*' ) {
-		c = this.backquote(c);
+	if( opt.backquote ) {
+		t = this.backquote(t);
+
+		if( c !== '*' ) c = this.backquote(c);
 	}
 
 	if( Array.isArray( c ) )

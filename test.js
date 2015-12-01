@@ -12,10 +12,10 @@ exports.select = function(test) {
 			.limit( '300', 1000 )
 			.or( "`name`" ).like("ro%en")
 			.query().sql,
-		"SELECT * FROM users WHERE `id` IN (1,2,3,4,5,6) AND `date_time` BETWEEN "
+		"SELECT * FROM `users` WHERE `id` IN (1,2,3,4,5,6) AND `date_time` BETWEEN "
 			+ "'2012-09-12' AND '2013-01-20' AND `monkey` = 'see' OR `monkey` = 'do'"
 			+ " OR `name` LIKE 'ro%en' GROUP BY `type`, `hamster` ASC ORDER BY `id` ASC "
-			+ "LIMIT 1000, 300",
+			+ "LIMIT 300 OFFSET 1000",
 		"Complicated SELECT"
 	);
 
@@ -38,10 +38,10 @@ exports.select = function(test) {
 			.union(['screename', 'email_address','firstName','lastName'], 'app_users')
 			.where({"company":"coName"})
 			.query().sql,
-		"SELECT `username`, `email`, `first_name`, `last_name` FROM users "
+		"SELECT `username`, `email`, `first_name`, `last_name` FROM `users` "
 			+ "WHERE `company_id` = '1234' "
 			+ "UNION SELECT `screename`, `email_address`, `firstName`, `lastName` "
-			+ "FROM app_users WHERE `company` = 'coName'",
+			+ "FROM `app_users` WHERE `company` = 'coName'",
 		"simple UNION with where clauses"
 	);
 
@@ -52,7 +52,7 @@ exports.select = function(test) {
 		.and([{flavor: 'sweet', chocolate: true},{caramel: true}])
 		.or([{flavor: 'salty', peanuts: true}])
 		.query().sql,
-		"SELECT * FROM food WHERE `type` = 'junk' AND "
+		"SELECT * FROM `food` WHERE `type` = 'junk' AND "
 			+ "(`flavor` = 'sweet' AND `chocolate` = true OR `caramel` = true) OR "
 			+ "(`flavor` = 'salty' AND `peanuts` = true)",
 		"parenthetical where statements"
@@ -68,7 +68,7 @@ exports.insert = function(test) {
 			{ password: 'abcd', username: 'geo23', first_name: "george" },
 			{ first_name: "rudy", password: 'sh1r3l1ng', username: 'rudedude' }
 		] ).query().sql,
-		"INSERT INTO users (username, password, first_name) "
+		"INSERT INTO `users` (username, password, first_name) "
 			+ "VALUES ('test','1234','bob'),('geo23','abcd','george'),('rudedude','sh1r3l1ng','rudy')",
 		"Multiple INSERTs"
 	);
@@ -80,7 +80,7 @@ exports.insert = function(test) {
 				password: 'abcd',
 				first_name: "cubert"
 			}).query().sql,
-		"INSERT INTO users (username, password, first_name) "
+		"INSERT INTO `users` (username, password, first_name) "
 			+ "VALUES ('me','abcd','cubert')",
 		"Single INSERT"
 	);
@@ -172,7 +172,7 @@ exports.injection = function(test) {
 		.select(['email', 'password', 'full_name'], 'members')
 		.where({email: "x'; DROP TABLE members; --"})
 		.query().sql,
-		"SELECT `email`, `password`, `full_name` FROM members WHERE `email` = 'x\\'; "
+		"SELECT `email`, `password`, `full_name` FROM `members` WHERE `email` = 'x\\'; "
 			+ "DROP TABLE members; --'",
 		"SQL Injection"
 	);
@@ -181,7 +181,7 @@ exports.injection = function(test) {
 		.select(['username', 'password', 'type'], 'users')
 		.where({"1 = 1--": ""})
 		.query().sql,
-		"SELECT `username`, `password`, `type` FROM users WHERE `1 = 1--` = ''",
+		"SELECT `username`, `password`, `type` FROM `users` WHERE `1 = 1--` = ''",
 		"JS Key Injection"
 	);
 
@@ -189,7 +189,7 @@ exports.injection = function(test) {
 		.select('*', 'pages')
 		.where({title: '\n\t'})
 		.query().sql,
-		"SELECT * FROM pages WHERE `title` = '\\n\\t'",
+		"SELECT * FROM `pages` WHERE `title` = '\\n\\t'",
 		"Whitespace Characters"
 	);
 
@@ -203,7 +203,7 @@ exports.file = function(test) {
 			.where( { "company": "general motors" } )
 			.file( "/tmp/datafile", ",", '"', "\\n" )
 			.query().sql,
-		"SELECT * FROM users WHERE `company` = 'general motors' "
+		"SELECT * FROM `users` WHERE `company` = 'general motors' "
 			+ "INTO OUTFILE '/tmp/datafile' FIELDS TERMINATED BY ',' "
 			+ "OPTIONALLY ENCLOSED BY '\"' LINES TERMINATED BY '\\n'",
 		"SELECT INTO FILE with ENCLOSED BY"
@@ -214,7 +214,7 @@ exports.file = function(test) {
 			.where( { "company": "general motors" } )
 			.file( "/tmp/datafile", ",", "\\n" )
 			.query().sql,
-		"SELECT * FROM users WHERE `company` = 'general motors' "
+		"SELECT * FROM `users` WHERE `company` = 'general motors' "
 			+ "INTO OUTFILE '/tmp/datafile' FIELDS TERMINATED BY ','  "
 			+ "LINES TERMINATED BY '\\n'",
 		"SELECT INTO FILE simple"
