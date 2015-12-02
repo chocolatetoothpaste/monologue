@@ -1,5 +1,22 @@
 var mono = require('./monologue');
 
+// mono().select(['username', 'password'], 'users').where('id').not([1,2,3]).query();
+var t = mono().select(['username', 'password'], 'users').where('status').lt(8).query();
+console.log(t.sql);
+// var t = mono().select(['username', 'password'], 'users').lte({username: 'dan'}).query();
+// console.log(t);
+var t = mono({backquote: false})
+			.select(['id', 'username', 'password', 'sum(posts) as posts'], 'users')
+			.where('status')
+			.in([4,15,3,9])
+			.having('posts').gt(5)
+			.query();
+console.log(t.sql);
+// var t = mono().select(['username', 'password'], 'users').gte({username: 'dan'}).query();
+// console.log(t);
+
+return;
+
 exports.select = function(test) {
 
 	test.deepEqual(
@@ -24,7 +41,7 @@ exports.select = function(test) {
 			.select('id, username, password, sum(posts) as posts', 'users')
 			.where('status')
 			.in([4,15,3,9])
-			.having('posts > 5')
+			.having('posts').gt(5)
 			.query().sql,
 		"SELECT id, username, password, sum(posts) as posts FROM users "
 			+ "WHERE status IN (4,15,3,9) HAVING posts > 5",

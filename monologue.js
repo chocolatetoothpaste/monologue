@@ -22,6 +22,7 @@ function monologue(options) {
 
 function Monologue() {
 	this.sql = '';
+	this.cond = null;
 
 	// set the inital parts container
 	this.reset();
@@ -207,6 +208,8 @@ Monologue.prototype.where = function where( wh, sep ) {
 		? this.parts.where + sep + wh
 		: wh );
 
+	this.cond = this.where;
+
 	return this;
 };
 
@@ -293,6 +296,8 @@ Monologue.prototype.having = function having( hav, sep ) {
 		? this.parts.having + sep + hav
 		: hav );
 
+	this.cond = this.having;
+
 	return this;
 };
 
@@ -343,6 +348,83 @@ Monologue.prototype.union = function union( c, t ) {
 	this.reset();
 
 	this.parts.query = sql += " UNION SELECT " + c + " FROM " + t;
+
+	return this;
+};
+
+
+Monologue.prototype.not = function not(v, sep) {
+	sep = sep || 'AND';
+	sep = ' ' + sep + ' ';
+
+	if( typeof v === 'undefined' ) {
+		this.where( 'NOT' );
+	}
+
+	else if( Array.isArray(v) ) {
+		this.where( 'NOT' + this.format(v, '') );
+	}
+
+	else if( Object(v) === v ) {
+		this.where( this.stringify(v, '!=').join(sep) );
+	}
+
+	return this;
+};
+
+Monologue.prototype.lt = function lt(v, sep) {
+	sep = sep || 'AND';
+	sep = ' ' + sep + ' ';
+
+	if( ! Array.isArray(v) && Object(v) !== v ) {
+		this.cond.call( this, this.format(v), '<' );
+	}
+	else {
+		this.cond.call( this, this.stringify(v, '<').join(sep) );
+	}
+
+	return this;
+};
+
+Monologue.prototype.lte = function lte(v, sep) {
+	sep = sep || 'AND';
+	sep = ' ' + sep + ' ';
+
+	if( ! Array.isArray(v) && Object(v) !== v ) {
+		this.cond.call( this, this.format(v), '<=' );
+	}
+	else {
+		this.cond.call( this, this.stringify(v, '<=').join(sep) );
+	}
+
+	return this;
+};
+
+Monologue.prototype.gt = function gt(v, sep) {
+	sep = sep || 'AND';
+	sep = ' ' + sep + ' ';
+
+	if( ! Array.isArray(v) && Object(v) !== v ) {
+		this.cond.call( this, this.format(v), '>' );
+	}
+	else {
+		this.cond.call( this, this.stringify(v, '>').join(sep) );
+	}
+
+
+	return this;
+};
+
+Monologue.prototype.gte = function gte(v, sep) {
+	sep = sep || 'AND';
+	sep = ' ' + sep + ' ';
+
+	if( ! Array.isArray(v) && Object(v) !== v ) {
+		this.cond.call( this, this.format(v), '>=' );
+	}
+	else {
+		this.cond.call( this, this.stringify(v, '>=').join(sep) );
+	}
 
 	return this;
 };
