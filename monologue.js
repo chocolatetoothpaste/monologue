@@ -4,6 +4,7 @@
 var opt = {};
 
 function monologue(options) {
+	// default values
 	var dict = { escape: true, backquote: true, sort_keys: false };
 
 	if( typeof options === "undefined" ) {
@@ -28,7 +29,7 @@ function Monologue() {
 
 
 /**
- * resets the global container object
+ * all the "parts" of a query
  */
 
 Monologue.prototype.reset = function reset() {
