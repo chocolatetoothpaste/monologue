@@ -381,61 +381,34 @@ Monologue.prototype.not = function not(v, sep) {
 };
 
 Monologue.prototype.lt = function lt(v, sep) {
-	sep = sep || 'AND';
-	sep = ' ' + sep + ' ';
-
-	if( ! Array.isArray(v) && Object(v) !== v ) {
-		this.condition.call( this, this.format(v), '<' );
-	}
-	else {
-		this.condition.call( this, this.stringify(v, '<').join(sep) );
-	}
-
-	return this;
+	return this.comparison(v, sep, '<');
 };
 
 Monologue.prototype.lte = function lte(v, sep) {
-	sep = sep || 'AND';
-	sep = ' ' + sep + ' ';
-
-	if( ! Array.isArray(v) && Object(v) !== v ) {
-		this.condition.call( this, this.format(v), '<=' );
-	}
-	else {
-		this.condition.call( this, this.stringify(v, '<=').join(sep) );
-	}
-
-	return this;
+	return this.comparison(v, sep, '<=');
 };
 
 Monologue.prototype.gt = function gt(v, sep) {
-	sep = sep || 'AND';
-	sep = ' ' + sep + ' ';
-
-	if( ! Array.isArray(v) && Object(v) !== v ) {
-		this.condition.call( this, this.format(v), '>' );
-	}
-	else {
-		this.condition.call( this, this.stringify(v, '>').join(sep) );
-	}
-
-
-	return this;
+	return this.comparison(v, sep, '>');
 };
 
 Monologue.prototype.gte = function gte(v, sep) {
+	return this.comparison(v, sep, '>=');
+};
+
+Monologue.prototype.comparison = function comparison(v, sep, eq) {
 	sep = sep || 'AND';
 	sep = ' ' + sep + ' ';
 
 	if( ! Array.isArray(v) && Object(v) !== v ) {
-		this.condition.call( this, this.format(v), '>=' );
+		this.condition.call( this, this.format(v), eq );
 	}
 	else {
-		this.condition.call( this, this.stringify(v, '>=').join(sep) );
+		this.condition.call( this, this.stringify( v, eq ).join(sep) );
 	}
 
 	return this;
-};
+}
 
 
 /**
