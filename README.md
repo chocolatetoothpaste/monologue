@@ -30,6 +30,9 @@ This area needs a ton of work.  You can get some great examples in the section b
 
 #Examples
 
+*These are a little out of date due to recent changes but are pretty close to correct*
+
+
     var monologue = require('monologue');
 
     // grouping of where statements, pay attention to how the objects are grouped and what the output becomes
