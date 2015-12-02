@@ -43,9 +43,9 @@ exports.comparisons = function comparisons(test) {
 		mono()
 			.select('*', 'media')
 			.not({'type': null})
-			.and('file_size').gt(0)
+			.gt({file_size: 0, length: 24325})
 			.query().sql,
-		'SELECT * FROM `media` WHERE `type` IS NOT NULL AND file_size > 0',
+		'SELECT * FROM `media` WHERE `type` IS NOT NULL AND `file_size` > 0 AND `length` > 24325',
 		'IS NOT NULL'
 	);
 
@@ -178,7 +178,7 @@ exports.insert = function(test) {
 			{ first_name: "rudy", password: 'sh1r3l1ng', username: 'rudedude' }
 		] ).query().sql,
 		"INSERT INTO `users` (`username`, `password`, `first_name`) "
-			+ "VALUES ('test','1234','bob'),('geo23','abcd','george'),('rudedude','sh1r3l1ng','rudy')",
+			+ "VALUES ('test', '1234', 'bob'),('geo23', 'abcd', 'george'),('rudedude', 'sh1r3l1ng', 'rudy')",
 		"Multiple INSERTs"
 	);
 
@@ -190,7 +190,7 @@ exports.insert = function(test) {
 				first_name: "cubert"
 			}).query().sql,
 		"INSERT INTO `users` (`username`, `password`, `first_name`) "
-			+ "VALUES ('me','abcd','cubert')",
+			+ "VALUES ('me', 'abcd', 'cubert')",
 		"Single INSERT"
 	);
 

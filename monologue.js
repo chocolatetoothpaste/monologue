@@ -356,55 +356,60 @@ Monologue.prototype.union = function union( c, t ) {
 };
 
 
-Monologue.prototype.not = function not(v, sep) {
+Monologue.prototype.not = function not(p, sep) {
 	sep = sep || 'AND';
 	sep = ' ' + sep + ' ';
 
-	if( typeof v === 'undefined' ) {
+	if( typeof p === 'undefined' ) {
 		this.where( ' NOT', '' );
 	}
 
-	else if( Array.isArray(v) && Object(v[0]) === v[0]  ) {
-		this.where( v.map(function(val, k) {
-			return this.stringify(val, '!=')
+	else if( Array.isArray(p) && Object(p[0]) === p[0]  ) {
+		this.where( p.map(function(v, k) {
+			return this.stringify(v, '!=')
 		}.bind(this)).join(sep) );
 	}
 
-	else if( Array.isArray(v) ) {
-		this.where( ' NOT' + this.format(v, ''), '' );
+	else if( Array.isArray(p) ) {
+		this.where( ' NOT' + this.format(p, ''), '' );
 	}
-	else if( Object(v) === v ) {
-		this.where( this.stringify(v, '!=').join(sep) );
+	else if( Object(p) === p ) {
+		this.where( this.stringify(p, '!=').join(sep) );
 	}
 
 	return this;
 };
 
-Monologue.prototype.lt = function lt(v, sep) {
-	return this.comparison(v, sep, '<');
+Monologue.prototype.lt = function lt(p, sep) {
+	return this.comparison(p, sep, '<');
 };
 
-Monologue.prototype.lte = function lte(v, sep) {
-	return this.comparison(v, sep, '<=');
+Monologue.prototype.lte = function lte(p, sep) {
+	return this.comparison(p, sep, '<=');
 };
 
-Monologue.prototype.gt = function gt(v, sep) {
-	return this.comparison(v, sep, '>');
+Monologue.prototype.gt = function gt(p, sep) {
+	return this.comparison(p, sep, '>');
 };
 
-Monologue.prototype.gte = function gte(v, sep) {
-	return this.comparison(v, sep, '>=');
+Monologue.prototype.gte = function gte(p, sep) {
+	return this.comparison(p, sep, '>=');
 };
 
-Monologue.prototype.comparison = function comparison(v, sep, eq) {
+Monologue.prototype.comparison = function comparison(p, sep, eq) {
 	sep = sep || 'AND';
 	sep = ' ' + sep + ' ';
 
-	if( ! Array.isArray(v) && Object(v) !== v ) {
-		this.condition.call( this, this.format(v), eq );
+	if( ! Array.isArray(p) && Object(p) !== p ) {
+		this.condition.call( this, this.format(p), eq );
 	}
+	// else if( Array.isArray(p) && Object(p[0]) === p[0]  ) {
+	// 	this.condition.call( this, p.map(function(val, k) {
+	// 		return this.stringify(val, eq).join(sep)
+	// 	}.bind(this)) );
+	// }
 	else {
-		this.condition.call( this, this.stringify( v, eq ).join(sep) );
+		this.condition.call( this, this.stringify( p, eq ).join(sep) );
 	}
 
 	return this;
@@ -462,7 +467,8 @@ Monologue.prototype.query = function query() {
  * p: params, s: separator
  */
 
-Monologue.prototype.stringify = function stringify( p, s ) {
+Monologue.prototype.stringify = function stringify( p, s, j ) {
+	j = j || ', ';
 	s = ( typeof s === "undefined" ? "=" : s );
 	var c = [];
 
@@ -484,10 +490,10 @@ Monologue.prototype.stringify = function stringify( p, s ) {
 						? this.backquote( this.parts.columns )
 						: this.parts.columns );
 
-					c.push( cols.join(', ') );
+					c.push( cols.join(j) );
 				}
 
-				c.push( "(" + this.stringify( p[ii], "" ).join(',') + ")" );
+				c.push( "(" + this.stringify( p[ii], "" ).join(j) + ")" );
 			}
 
 			else {
