@@ -68,7 +68,7 @@ exports.insert = function(test) {
 			{ password: 'abcd', username: 'geo23', first_name: "george" },
 			{ first_name: "rudy", password: 'sh1r3l1ng', username: 'rudedude' }
 		] ).query().sql,
-		"INSERT INTO `users` (username, password, first_name) "
+		"INSERT INTO `users` (`username`, `password`, `first_name`) "
 			+ "VALUES ('test','1234','bob'),('geo23','abcd','george'),('rudedude','sh1r3l1ng','rudy')",
 		"Multiple INSERTs"
 	);
@@ -80,7 +80,7 @@ exports.insert = function(test) {
 				password: 'abcd',
 				first_name: "cubert"
 			}).query().sql,
-		"INSERT INTO `users` (username, password, first_name) "
+		"INSERT INTO `users` (`username`, `password`, `first_name`) "
 			+ "VALUES ('me','abcd','cubert')",
 		"Single INSERT"
 	);

@@ -415,12 +415,12 @@ Monologue.prototype.stringify = function stringify( p, s ) {
 						this.parts.columns.sort();
 
 					// these columns don't get passed through monologue.format
-					// so do it here
-					if( opt.backquote ) {
-						this.parts.columns = this.backquote(this.parts.columns);
-					}
+					// so do it here, if applicable
+					var cols = ( opt.backquote
+						? this.backquote( this.parts.columns )
+						: this.parts.columns );
 
-					c.push( this.parts.columns.join(', ') );
+					c.push( cols.join(', ') );
 				}
 
 				c.push( "(" + this.stringify( p[ii], "" ).join(',') + ")" );
