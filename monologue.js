@@ -148,12 +148,8 @@ Monologue.prototype.update = function update( tbl, p ) {
 		col = "SET " + this.stringify( p ).join( ', ' );
 	}
 
-	else if( typeof p === "string" ) {
-		col = p;
-	}
-
 	else {
-		// throw error
+		col = p;
 	}
 
 	this.parts.query = "UPDATE " + tbl + " " + col;
@@ -418,6 +414,12 @@ Monologue.prototype.stringify = function stringify( p, s ) {
 					if( opt.sort_keys )
 						this.parts.columns.sort();
 
+					// these columns don't get passed through monologue.format
+					// so do it here
+					if( opt.backquote ) {
+						this.parts.columns = this.backquote(this.parts.columns);
+					}
+
 					c.push( this.parts.columns.join(', ') );
 				}
 
@@ -433,6 +435,8 @@ Monologue.prototype.stringify = function stringify( p, s ) {
 
 	else {
 		// if this.parts.columns is set, it's already sorted (if sorting)
+		// and backquoted (if backquoting). otherwise, columns will be
+		// backquoted when they are formatted
 		if( this.parts.columns.length === 0 ) {
 			var col = ( opt.sort_keys
 				? Object.keys(p).sort()
