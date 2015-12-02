@@ -1,21 +1,113 @@
 var mono = require('./monologue');
 
-// mono().select(['username', 'password'], 'users').where('id').not([1,2,3]).query();
-var t = mono().select(['username', 'password'], 'users').where('status').lt(8).query();
-console.log(t.sql);
+console.log(
+);
+
+// var t = mono().select(['username', 'password'], 'users').where('status').lt(8).query();
+// console.log(t.sql);
 // var t = mono().select(['username', 'password'], 'users').lte({username: 'dan'}).query();
 // console.log(t);
-var t = mono({backquote: false})
-			.select(['id', 'username', 'password', 'sum(posts) as posts'], 'users')
-			.where('status')
-			.in([4,15,3,9])
-			.having('posts').gt(5)
-			.query();
-console.log(t.sql);
+// var t = mono({backquote: false})
+// 			.select(['id', 'username', 'password', 'sum(posts) as posts'], 'users')
+// 			.where('status')
+// 			.in([4,15,3,9])
+// 			.having('posts').gt(5)
+// 			.query();
+// console.log(t.sql);
 // var t = mono().select(['username', 'password'], 'users').gte({username: 'dan'}).query();
 // console.log(t);
 
-return;
+// return;
+//
+exports.comparisons = function comparisons(test) {
+	test.deepEqual(
+		mono()
+			.select(['username', 'password'], 'users')
+			.where('id')
+			.not([1,2,3,4])
+			.query().sql,
+		'SELECT `username`, `password` FROM `users` WHERE id NOT IN (1,2,3,4)',
+		'NOT IN() (array)'
+	);
+
+	test.deepEqual(
+		mono()
+			.select('*', 'campsites')
+			.not({'reserved': true, fishing: 'slow'})
+			.query().sql,
+		'SELECT * FROM `campsites` WHERE `reserved` != true AND `fishing` != \'slow\'',
+		'NOT EQUAL (object) (!=)'
+	);
+
+	test.deepEqual(
+		mono()
+			.select('*', 'media')
+			.not({'type': null})
+			.and('file_size').gt(0)
+			.query().sql,
+		'SELECT * FROM `media` WHERE `type` IS NOT NULL AND file_size > 0',
+		'IS NOT NULL'
+	);
+
+	test.deepEqual(
+		mono()
+			.select(['username', 'password'], 'users')
+			.not([{username: 'joe'},{username: 'bob'}])
+			.query().sql,
+		'SELECT `username`, `password` FROM `users` WHERE `username` != \'joe\' AND `username` != \'bob\'',
+		'NOT EQUAL (array of objects) (!=)'
+	);
+
+	test.deepEqual(
+		mono()
+			.select('*', 'users')
+			.where('last_login')
+			.not()
+			.between('2015-10-01 00:00:00', '2015-11-30 23:59:59')
+			.query().sql,
+		'SELECT * FROM `users` WHERE last_login NOT BETWEEN \'2015-10-01 00:00:00\' AND \'2015-11-30 23:59:59\'',
+		'NOT BETWEEN'
+	);
+
+	test.deepEqual(
+		mono()
+			.select(['title', 'post'], 'posts')
+			.where('status').lt(8)
+			.query().sql,
+		'SELECT `title`, `post` FROM `posts` WHERE status < 8',
+		'Less than (<)'
+	);
+
+	test.deepEqual(
+		mono({backquote: false})
+			.select('*', 'posts')
+			.where('favorited').lte(815)
+			.query().sql,
+		'SELECT * FROM posts WHERE favorited <= 815',
+		'Less than/equal to (<=)'
+	);
+
+	test.deepEqual(
+		mono()
+			.select(['post_id', 'comments'], 'comments')
+			.where({post_id: 23565})
+			.where('date_time').gt('2015-12-01 00:00:00')
+			.query().sql,
+		'SELECT `post_id`, `comments` FROM `comments` WHERE `post_id` = 23565 AND date_time > \'2015-12-01 00:00:00\'',
+		'Greater Than (>)'
+	);
+
+	test.deepEqual(
+		mono({backquote: false})
+			.select(['sum(id) as count'], 'comments')
+			.having('count').gte(42)
+			.query().sql,
+		'SELECT sum(id) as count FROM comments HAVING count >= 42',
+		'Greater Than/Equal to (>=)'
+	);
+
+	test.done();
+};
 
 exports.select = function(test) {
 

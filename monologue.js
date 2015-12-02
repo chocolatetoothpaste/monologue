@@ -22,7 +22,10 @@ function monologue(options) {
 
 function Monologue() {
 	this.sql = '';
-	this.cond = null;
+
+	// store whether where() or having() was used last
+	// (I hope this doesn't get ugly)
+	this.condition = null;
 
 	// set the inital parts container
 	this.reset();
@@ -208,7 +211,7 @@ Monologue.prototype.where = function where( wh, sep ) {
 		? this.parts.where + sep + wh
 		: wh );
 
-	this.cond = this.where;
+	this.condition = this.where;
 
 	return this;
 };
@@ -296,7 +299,7 @@ Monologue.prototype.having = function having( hav, sep ) {
 		? this.parts.having + sep + hav
 		: hav );
 
-	this.cond = this.having;
+	this.condition = this.having;
 
 	return this;
 };
@@ -358,13 +361,18 @@ Monologue.prototype.not = function not(v, sep) {
 	sep = ' ' + sep + ' ';
 
 	if( typeof v === 'undefined' ) {
-		this.where( 'NOT' );
+		this.where( ' NOT', '' );
+	}
+
+	else if( Array.isArray(v) && Object(v[0]) === v[0]  ) {
+		this.where( v.map(function(val, k) {
+			return this.stringify(val, '!=')
+		}.bind(this)).join(sep) );
 	}
 
 	else if( Array.isArray(v) ) {
-		this.where( 'NOT' + this.format(v, '') );
+		this.where( ' NOT' + this.format(v, ''), '' );
 	}
-
 	else if( Object(v) === v ) {
 		this.where( this.stringify(v, '!=').join(sep) );
 	}
@@ -377,10 +385,10 @@ Monologue.prototype.lt = function lt(v, sep) {
 	sep = ' ' + sep + ' ';
 
 	if( ! Array.isArray(v) && Object(v) !== v ) {
-		this.cond.call( this, this.format(v), '<' );
+		this.condition.call( this, this.format(v), '<' );
 	}
 	else {
-		this.cond.call( this, this.stringify(v, '<').join(sep) );
+		this.condition.call( this, this.stringify(v, '<').join(sep) );
 	}
 
 	return this;
@@ -391,10 +399,10 @@ Monologue.prototype.lte = function lte(v, sep) {
 	sep = ' ' + sep + ' ';
 
 	if( ! Array.isArray(v) && Object(v) !== v ) {
-		this.cond.call( this, this.format(v), '<=' );
+		this.condition.call( this, this.format(v), '<=' );
 	}
 	else {
-		this.cond.call( this, this.stringify(v, '<=').join(sep) );
+		this.condition.call( this, this.stringify(v, '<=').join(sep) );
 	}
 
 	return this;
@@ -405,10 +413,10 @@ Monologue.prototype.gt = function gt(v, sep) {
 	sep = ' ' + sep + ' ';
 
 	if( ! Array.isArray(v) && Object(v) !== v ) {
-		this.cond.call( this, this.format(v), '>' );
+		this.condition.call( this, this.format(v), '>' );
 	}
 	else {
-		this.cond.call( this, this.stringify(v, '>').join(sep) );
+		this.condition.call( this, this.stringify(v, '>').join(sep) );
 	}
 
 
@@ -420,10 +428,10 @@ Monologue.prototype.gte = function gte(v, sep) {
 	sep = ' ' + sep + ' ';
 
 	if( ! Array.isArray(v) && Object(v) !== v ) {
-		this.cond.call( this, this.format(v), '>=' );
+		this.condition.call( this, this.format(v), '>=' );
 	}
 	else {
-		this.cond.call( this, this.stringify(v, '>=').join(sep) );
+		this.condition.call( this, this.stringify(v, '>=').join(sep) );
 	}
 
 	return this;
@@ -583,7 +591,12 @@ Monologue.prototype.format = function format( v, k, s ) {
 
 		if( k && opt.backquote ) {
 			k = this.backquote(k);
+
+			if( v === 'NULL' && s ) {
+				s = 'IS NOT';
+			}
 		}
+
 
 		// if s and/or k is undefined, it is an array of values so just format value
 		// and ditch the key and separator
