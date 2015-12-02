@@ -572,7 +572,7 @@ Monologue.prototype.format = function format( v, k, s ) {
 			k = this.backquote(k);
 
 			if( v === 'NULL' && s ) {
-				s = 'IS NOT';
+				s = ( s === '=' ? 'IS' : 'IS NOT' );
 			}
 		}
 

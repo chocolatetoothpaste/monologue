@@ -22,6 +22,15 @@ console.log(
 exports.comparisons = function comparisons(test) {
 	test.deepEqual(
 		mono()
+			.select('*', 'users')
+			.where({password: null})
+			.query().sql,
+		'SELECT * FROM `users` WHERE `password` IS NULL',
+		'IS NULL'
+	);
+
+	test.deepEqual(
+		mono()
 			.select(['username', 'password'], 'users')
 			.where('id')
 			.not([1,2,3,4])
