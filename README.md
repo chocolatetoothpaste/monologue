@@ -76,7 +76,7 @@ New methods were added for doing different types of comparison. File a github is
         .query().sql;
 
 
-#API
+# API
 
 This area needs a ton of work.  You can get some great examples in the section by the same name.  For now, here's a quick rundown of `monologue().backquote()`:
 
@@ -93,7 +93,7 @@ This area needs a ton of work.  You can get some great examples in the section b
     // result: '`cupcake`'
     monologue().backquote('cupcake');
 
-#Examples
+# Examples
 
 *These are a little out of date due to recent changes but are pretty close to correct*
 
