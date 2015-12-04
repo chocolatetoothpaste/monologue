@@ -397,14 +397,16 @@ Monologue.prototype.comparison = function comparison(p, sep, eq) {
 	sep = sep || 'AND';
 	sep = ' ' + sep + ' ';
 
-	if( ! Array.isArray(p) && Object(p) !== p ) {
+	this.condition = this.condition || this.where;
+
+	if( Array.isArray(p) && Object(p[0]) === p[0]  ) {
+		p.map(function(val) {
+			this.condition.call( this, this.stringify( val, eq ).join(' AND '), sep.trim() );
+		}.bind(this));
+	}
+	else if( ! Array.isArray(p) && Object(p) !== p ) {
 		this.condition.call( this, this.format(p), eq );
 	}
-	// else if( Array.isArray(p) && Object(p[0]) === p[0]  ) {
-	// 	this.condition.call( this, p.map(function(val, k) {
-	// 		return this.stringify(val, eq).join(sep)
-	// 	}.bind(this)) );
-	// }
 	else {
 		this.condition.call( this, this.stringify( p, eq ).join(sep) );
 	}

@@ -57,17 +57,17 @@ New methods were added for doing different types of comparison. File a github is
         .where('status').lt(8)
         .query().sql;
 
-    // SELECT * FROM `posts` WHERE `favorited` <= 815
+    // SELECT * FROM `posts` WHERE `favorited` <= 815 AND `commentors` <= 1516 OR `likes` <= 42
     mono()
         .select('*', 'posts')
-        .where('favorited').lte(815)
+        .lte([{favorited: 815, commentors: 1516},{likes: 42}], 'OR')
         .query().sql;
 
     // SELECT `post_id`, `comments` FROM `comments` WHERE `post_id` = 23565 AND date_time > \'2015-12-01 00:00:00\'
-        mono()
-            .select(['post_id', 'comments'], 'comments')
-            .where({post_id: 23565})
-            .where('date_time').gt('2015-12-01 00:00:00')
+    mono()
+        .select(['post_id', 'comments'], 'comments')
+        .where({post_id: 23565})
+        .where('date_time').gt('2015-12-01 00:00:00')
 
     // SELECT sum(id) as count FROM comments HAVING count >= 42
     mono({backquote: false})

@@ -1,5 +1,12 @@
 var mono = require('./monologue');
 
+var t = mono()
+			.select('*', 'posts')
+			.lte([{favorited: 815, commentors: 1516},{likes: 42}], 'OR')
+			.query().sql;
+
+console.log(t);
+
 exports.comparisons = function comparisons(test) {
 	test.deepEqual(
 		mono()
@@ -71,7 +78,7 @@ exports.comparisons = function comparisons(test) {
 	test.deepEqual(
 		mono({backquote: false})
 			.select('*', 'posts')
-			.where('favorited').lte(815)
+			.lte({favorited: 815})
 			.query().sql,
 		'SELECT * FROM posts WHERE favorited <= 815',
 		'Less than/equal to (<=)'
