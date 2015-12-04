@@ -184,7 +184,7 @@ Monologue.prototype.where = function where( wh, sep ) {
 	sep = ( typeof sep === "undefined" ? "AND" : sep );
 	sep = ( sep.length > 0 ? " " + sep + " " : sep );
 
-	if( Array.isArray( wh ) ) {
+	if( Array.isArray( wh ) && Object(wh[0]) === wh[0] ) {
 		wh.forEach(function(v, k, arr) {
 			arr[k] = this.stringify( v ).join(' AND ');
 		}.bind(this));
@@ -193,16 +193,14 @@ Monologue.prototype.where = function where( wh, sep ) {
 		wh = '(' + wh.join(' OR ') + ')';
 	}
 
+	else if( Array.isArray(wh) ) {
+		wh = wh.join(' OR ');
+	}
+
 	else if( wh === Object(wh) ) {
 		// stringify the where statements
 		wh = this.stringify( wh ).join( sep );
 	}
-
-	// else {
-	// 	if( opt.backquote ) {
-	// 		wh = this.backquote(wh);
-	// 	}
-	// }
 
 	// else wh is a string
 
@@ -357,11 +355,7 @@ Monologue.prototype.not = function not(p, sep) {
 	sep = sep || 'AND';
 	sep = ' ' + sep + ' ';
 
-	if( typeof p === 'undefined' ) {
-		this.where( ' NOT', '' );
-	}
-
-	else if( Array.isArray(p) && Object(p[0]) === p[0]  ) {
+	if( Array.isArray(p) && Object(p[0]) === p[0]  ) {
 		this.where( p.map(function(v, k) {
 			return this.stringify(v, '!=')
 		}.bind(this)).join(sep) );
@@ -370,8 +364,13 @@ Monologue.prototype.not = function not(p, sep) {
 	else if( Array.isArray(p) ) {
 		this.where( ' NOT' + this.format(p, ''), '' );
 	}
+
 	else if( Object(p) === p ) {
 		this.where( this.stringify(p, '!=').join(sep) );
+	}
+
+	else {
+		this.where( ' NOT', '' );
 	}
 
 	return this;
@@ -400,16 +399,25 @@ Monologue.prototype.comparison = function comparison(p, sep, eq) {
 	this.condition = this.condition || this.where;
 
 	if( Array.isArray(p) && Object(p[0]) === p[0]  ) {
-		p.map(function(val) {
-			this.condition.call( this, this.stringify( val, eq ).join(' AND '), sep.trim() );
-		}.bind(this));
+		sep = sep.trim()
+		this.condition.call( this, p.map(function(val) {
+			var str = this.stringify( val, eq ).join(' AND ');
+			return str;
+			// this.condition.call( this, str, sep );
+		}.bind(this)), sep );
 	}
-	else if( ! Array.isArray(p) && Object(p) !== p ) {
-		this.condition.call( this, this.format(p), eq );
-	}
-	else {
+	else if( Object(p) === p ) {
 		this.condition.call( this, this.stringify( p, eq ).join(sep) );
 	}
+	else {
+		this.condition.call( this, this.format(p), eq );
+	}
+	// else if( ! Array.isArray(p) && Object(p) !== p ) {
+	// 	this.condition.call( this, this.format(p), eq );
+	// }
+	// else {
+	// 	this.condition.call( this, this.stringify( p, eq ).join(sep) );
+	// }
 
 	return this;
 }

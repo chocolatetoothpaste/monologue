@@ -1,8 +1,9 @@
 var mono = require('./monologue');
 
 var t = mono()
-			.select('*', 'posts')
-			.lte([{favorited: 815, commentors: 1516},{likes: 42}], 'OR')
+			.update('posts', {featured: true})
+			.lt({views: 1000, comments: 23}, 'OR')
+			// .lte({favorited: 815, commentors: 1516})
 			.query().sql;
 
 console.log(t);
@@ -82,6 +83,24 @@ exports.comparisons = function comparisons(test) {
 			.query().sql,
 		'SELECT * FROM posts WHERE favorited <= 815',
 		'Less than/equal to (<=)'
+	);
+
+	test.deepEqual(
+		mono()
+			.select('*', 'posts')
+			.lte([{favorited: 815, commentors: 1516},{likes: 42}], 'OR')
+			.query().sql,
+		'SELECT * FROM `posts` WHERE `favorited` <= 815 AND `commentors` <= 1516 OR `likes` <= 42',
+		'Comparison with complex grouping and separator'
+	);
+
+	test.deepEqual(
+		mono()
+			.update('posts', {featured: true})
+			.lt({views: 1000, comments: 23}, 'OR')
+			.query().sql,
+		'UPDATE `posts` SET `featured` = true WHERE `views` < 1000 OR `comments` < 23',
+		'Comparison with optional/alternative separator'
 	);
 
 	test.deepEqual(
