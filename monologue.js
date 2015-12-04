@@ -62,10 +62,11 @@ Monologue.prototype.select = function select( col, tbl ) {
 		if( col !== '*' ) col = this.backquote(col);
 	}
 
-	if( Array.isArray( col ) )
+	if( Array.isArray( col ) ) {
 		col = col.join( ", " );
+	}
 
-	this.parts.query = "SELECT " + col + " FROM " + tbl;
+	this.parts.query = ["SELECT", col, "FROM", tbl].join(' ');
 
 	return this;
 };
@@ -100,7 +101,7 @@ Monologue.prototype.join = function join( dir, tbl, stmt ) {
 		stmt = fields.join(" AND ");
 	}
 
-	this.parts.join.push( " " + dir + " JOIN " + tbl + " ON " + stmt );
+	this.parts.join.push( [dir, "JOIN", tbl, "ON", stmt].join(' ') );
 
 	return this;
 };
@@ -132,7 +133,7 @@ Monologue.prototype.insert = function insert( tbl, p ) {
 		col = p;
 	}
 
-	this.parts.query = "INSERT INTO " + tbl + " " + col;
+	this.parts.query = ["INSERT INTO", tbl, col].join(' ');
 
 	return this;
 };
@@ -157,7 +158,7 @@ Monologue.prototype.update = function update( tbl, p ) {
 		col = p;
 	}
 
-	this.parts.query = "UPDATE " + tbl + " " + col;
+	this.parts.query = ["UPDATE", tbl, col].join(' ');
 
 	return this;
 };
@@ -242,9 +243,7 @@ Monologue.prototype.like = function like( like ) {
 		like = this.escape(like);
 	}
 
-	this.parts.where += " LIKE " + like;
-
-	return this;
+	return this.where(" LIKE " + like, '');
 };
 
 
@@ -257,9 +256,7 @@ Monologue.prototype.between = function between( one, two ) {
 		two = this.escape(two);
 	}
 
-	this.parts.where += " BETWEEN " + one + " AND " + two;
-
-	return this;
+	return this.where(" BETWEEN " + one + " AND " + two, '');
 };
 
 
@@ -442,7 +439,7 @@ Monologue.prototype.file = function file( f, t, e, l ) {
 
 Monologue.prototype.query = function query() {
 	if( this.parts.join.length > 0 )
-		this.parts.query += this.parts.join.join('');
+		this.parts.query += ' ' + this.parts.join.join(' ');
 	if( this.parts.where.length > 0 )
 		this.parts.query += " WHERE " + this.parts.where;
 	if( this.parts.group.length > 0 )
@@ -576,7 +573,6 @@ Monologue.prototype.format = function format( v, k, s ) {
 			}
 		}
 
-
 		// if s and/or k is undefined, it is an array of values so just format value
 		// and ditch the key and separator
 		return ( k && s ? k + " " + s + " " : '' ) + v;
@@ -589,17 +585,34 @@ Monologue.prototype.format = function format( v, k, s ) {
  * Escape unsafe characters to prevent sql injection
  */
 
-Monologue.prototype.escape = function escape( v ) {
-	if( v === undefined || v === null ) {
+Monologue.prototype.escape = function escape( val ) {
+	if( Array.isArray(val) ) {
+		return val.map(function(v) {
+			return this.escape(v);
+		// maintaining execution scope to avoid setting a var
+		// (can't wait to upgrade node 4+)
+		}.bind(this));
+	}
+
+	else if( Object(val) === val ) {
+		var obj = {};
+		for( var i in val ) {
+			obj[this.escape(i)] = val[i];
+		}
+
+		return obj;
+	}
+
+	if( val === undefined || val === null ) {
 		return 'NULL';
 	}
 
-	switch( typeof v ) {
-		case 'boolean': return (v ? 'true' : 'false');
-		case 'number': return v + '';
+	switch( typeof val ) {
+		case 'boolean': return (val ? 'true' : 'false');
+		case 'number': return val + '';
 	}
 
-	v = v.replace( /[\0\n\r\b\t\\\'\"\x1a]/g, function( s ) {
+	val = val.replace( /[\0\n\r\b\t\\\'\"\x1a]/g, function( s ) {
 		switch( s ) {
 			case "\0": return "\\0";
 			case "\n": return "\\n";
@@ -611,7 +624,7 @@ Monologue.prototype.escape = function escape( v ) {
 		}
 	});
 
-	return "'" + v + "'";
+	return "'" + val + "'";
 };
 
 

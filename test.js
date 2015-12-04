@@ -1,24 +1,5 @@
 var mono = require('./monologue');
 
-console.log(
-);
-
-// var t = mono().select(['username', 'password'], 'users').where('status').lt(8).query();
-// console.log(t.sql);
-// var t = mono().select(['username', 'password'], 'users').lte({username: 'dan'}).query();
-// console.log(t);
-// var t = mono({backquote: false})
-// 			.select(['id', 'username', 'password', 'sum(posts) as posts'], 'users')
-// 			.where('status')
-// 			.in([4,15,3,9])
-// 			.having('posts').gt(5)
-// 			.query();
-// console.log(t.sql);
-// var t = mono().select(['username', 'password'], 'users').gte({username: 'dan'}).query();
-// console.log(t);
-
-// return;
-//
 exports.comparisons = function comparisons(test) {
 	test.deepEqual(
 		mono()
@@ -288,9 +269,9 @@ exports.join = function(test) {
 exports.injection = function(test) {
 	test.deepEqual(mono()
 		.select(['email', 'password', 'full_name'], 'members')
-		.where({email: "x'; DROP TABLE members; --"})
+		.where({email: "'; DROP TABLE members; --"})
 		.query().sql,
-		"SELECT `email`, `password`, `full_name` FROM `members` WHERE `email` = 'x\\'; "
+		"SELECT `email`, `password`, `full_name` FROM `members` WHERE `email` = '\\'; "
 			+ "DROP TABLE members; --'",
 		"SQL Injection"
 	);
