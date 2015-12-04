@@ -11,6 +11,71 @@ Monologue - Streamlined query building
 
 * In previous versions, when doing multiple inserts(array of objects) the object keys were sorted alphabetically.  Instead of doing this automatically, it is now optional and defaults to not sorting.  This will make the output of the query more predictable based on input.  If you would like to enable sorting, you can pass `monologue({sort_keys: true})` as an option.  It is not necessary to sort keys, monologue puts your insert statements in the correct order (based on the order of the first object in the collection), but the option is there for unit testing compatibility and for analyzing output in testing.
 
+**New features**
+
+New methods were added for doing different types of comparison. File a github issue if you have some feedback, maybe they're stupid/useless, you be the judge:
+
+    // new methods: .gt(), .lt(), .gte(), .lte(), and .not()
+
+    // SELECT `username`, `password` FROM `users` WHERE id NOT IN (1,2,3,4)
+    mono()
+        .select(['username', 'password'], 'users')
+        .where('id')
+        .not([1,2,3,4])
+        .query().sql;
+
+    // SELECT * FROM `campsites` WHERE `reserved` != true AND `fishing` != \'slow\'
+    mono()
+        .select('*', 'campsites')
+        .not({'reserved': true, fishing: 'slow'})
+        .query().sql;
+
+    // SELECT * FROM `media` WHERE `type` IS NOT NULL AND `file_size` > 0 AND `seconds` > 24325
+    mono()
+        .select('*', 'media')
+        .not({'type': null})
+        .gt({file_size: 0, seconds: 24325})
+        .query().sql;
+
+    // SELECT `username`, `password` FROM `users` WHERE `username` != \'joe\' AND `username` != \'bob\'
+    mono()
+        .select(['username', 'password'], 'users')
+        .not([{username: 'joe'},{username: 'bob'}])
+        .query().sql;
+
+    // SELECT * FROM `users` WHERE last_login NOT BETWEEN \'2015-10-01 00:00:00\' AND \'2015-11-30 23:59:59\'
+    mono()
+        .select('*', 'users')
+        .where('last_login')
+        .not()
+        .between('2015-10-01 00:00:00', '2015-11-30 23:59:59')
+        .query().sql;
+
+    // SELECT `title`, `post` FROM `posts` WHERE status < 8
+    mono()
+        .select(['title', 'post'], 'posts')
+        .where('status').lt(8)
+        .query().sql;
+
+    // SELECT * FROM `posts` WHERE `favorited` <= 815
+    mono()
+        .select('*', 'posts')
+        .where('favorited').lte(815)
+        .query().sql;
+
+    // SELECT `post_id`, `comments` FROM `comments` WHERE `post_id` = 23565 AND date_time > \'2015-12-01 00:00:00\'
+        mono()
+            .select(['post_id', 'comments'], 'comments')
+            .where({post_id: 23565})
+            .where('date_time').gt('2015-12-01 00:00:00')
+
+    // SELECT sum(id) as count FROM comments HAVING count >= 42
+    mono({backquote: false})
+        .select(['sum(id) as count'], 'comments')
+        .having('count').gte(42)
+        .query().sql;
+
+
 #API
 
 This area needs a ton of work.  You can get some great examples in the section by the same name.  For now, here's a quick rundown of `monologue().backquote()`:
