@@ -1,13 +1,5 @@
 var mono = require('./monologue');
 
-var t = mono()
-			.update('posts', {featured: true})
-			.lt({views: 1000, comments: 23}, 'OR')
-			// .lte({favorited: 815, commentors: 1516})
-			.query().sql;
-
-console.log(t);
-
 exports.comparisons = function comparisons(test) {
 	test.deepEqual(
 		mono()

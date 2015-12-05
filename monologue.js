@@ -25,7 +25,7 @@ function Monologue() {
 
 	// store whether where() or having() was used last
 	// (I hope this doesn't get ugly)
-	this.condition = null;
+	this.last_condition = null;
 
 	// set the inital parts container
 	this.reset();
@@ -184,25 +184,7 @@ Monologue.prototype.where = function where( wh, sep ) {
 	sep = ( typeof sep === "undefined" ? "AND" : sep );
 	sep = ( sep.length > 0 ? " " + sep + " " : sep );
 
-	if( Array.isArray( wh ) && Object(wh[0]) === wh[0] ) {
-		wh.forEach(function(v, k, arr) {
-			arr[k] = this.stringify( v ).join(' AND ');
-		}.bind(this));
-
-		// join an array of objects with OR
-		wh = '(' + wh.join(' OR ') + ')';
-	}
-
-	else if( Array.isArray(wh) ) {
-		wh = wh.join(' OR ');
-	}
-
-	else if( wh === Object(wh) ) {
-		// stringify the where statements
-		wh = this.stringify( wh ).join( sep );
-	}
-
-	// else wh is a string
+	wh = this.condition(wh, sep);
 
 	// check if a previous where statement has been set and glue it
 	// all together
@@ -210,7 +192,7 @@ Monologue.prototype.where = function where( wh, sep ) {
 		? this.parts.where + sep + wh
 		: wh );
 
-	this.condition = this.where;
+	this.last_condition = this.where;
 
 	return this;
 };
@@ -284,19 +266,39 @@ Monologue.prototype.having = function having( hav, sep ) {
 	sep = ( typeof sep === "undefined" ? "AND" : sep );
 	sep = ( sep.length > 0 ? " " + sep + " " : sep );
 
-	if( typeof hav !== "string" ) {
-		// stringify the having statements
-		hav = this.stringify(hav).join( sep );
-	}
+	hav = this.condition(hav, sep);
 
 	// check if a previous statement has been set and glue it all together
 	this.parts.having = ( this.parts.having.length > 0
 		? this.parts.having + sep + hav
 		: hav );
 
-	this.condition = this.having;
+	this.last_condition = this.having;
 
 	return this;
+};
+
+
+Monologue.prototype.condition = function condition(cond, sep) {
+	if( Array.isArray( cond ) && Object(cond[0]) === cond[0] ) {
+		cond.forEach(function(v, k, arr) {
+			arr[k] = this.stringify( v ).join(' AND ');
+		}.bind(this));
+
+		// join an array of objects with OR
+		cond = '(' + cond.join(' OR ') + ')';
+	}
+
+	else if( Array.isArray(cond) ) {
+		cond = cond.join(' OR ');
+	}
+
+	else if( cond === Object(cond) ) {
+		// stringify the where statements
+		cond = this.stringify( cond ).join( sep );
+	}
+
+	return cond;
 };
 
 
@@ -396,31 +398,25 @@ Monologue.prototype.comparison = function comparison(p, sep, eq) {
 	sep = sep || 'AND';
 	sep = ' ' + sep + ' ';
 
-	this.condition = this.condition || this.where;
+	this.last_condition = this.last_condition || this.where;
 
 	if( Array.isArray(p) && Object(p[0]) === p[0]  ) {
-		sep = sep.trim()
-		this.condition.call( this, p.map(function(val) {
+		sep = sep.trim();
+
+		this.last_condition.call( this, p.map(function(val) {
 			var str = this.stringify( val, eq ).join(' AND ');
 			return str;
-			// this.condition.call( this, str, sep );
 		}.bind(this)), sep );
 	}
 	else if( Object(p) === p ) {
-		this.condition.call( this, this.stringify( p, eq ).join(sep) );
+		this.last_condition.call( this, this.stringify( p, eq ).join(sep) );
 	}
 	else {
-		this.condition.call( this, this.format(p), eq );
+		this.last_condition.call( this, this.format(p), eq );
 	}
-	// else if( ! Array.isArray(p) && Object(p) !== p ) {
-	// 	this.condition.call( this, this.format(p), eq );
-	// }
-	// else {
-	// 	this.condition.call( this, this.stringify( p, eq ).join(sep) );
-	// }
 
 	return this;
-}
+};
 
 
 /**
