@@ -1,30 +1,29 @@
 (function(exports) {
 "use strict";
 
-var _g = {
-	opt: {},
-	parts: {}
+function monologue(opt) {
+	return new Monologue(opt);
 }
 
-function monologue(opt) {
+function Monologue(opt) {
 	// default values
+	this.opt = {};
+
 	var dict = { escape: true, backquote: true, sort_keys: false };
 
 	if( typeof opt === "undefined" ) {
-		_g.opt = dict;
+		this.opt = dict;
 	}
 
 	else {
 		for( var i in dict ) {
-			_g.opt[i] = ( typeof opt[i] === "undefined" ? dict[i] : opt[i] );
+			this.opt[i] = ( typeof opt[i] === "undefined" ? dict[i] : opt[i] );
 		}
 	}
 
-	return new Monologue();
-}
-
-function Monologue() {
 	this.sql = '';
+
+	this.parts = {};
 
 	// store whether where() or having() was used last
 	// (I hope this doesn't get ugly)
@@ -40,7 +39,7 @@ function Monologue() {
  */
 
 Monologue.prototype.reset = function reset() {
-	_g.parts = {
+	this.parts = {
 		query: '',
 		join: [],
 		where: '',
@@ -59,7 +58,7 @@ Monologue.prototype.reset = function reset() {
  */
 
 Monologue.prototype.select = function select( col, tbl ) {
-	if( _g.opt.backquote ) {
+	if( this.opt.backquote ) {
 		tbl = this.backquote(tbl);
 
 		if( col !== '*' ) col = this.backquote(col);
@@ -69,7 +68,7 @@ Monologue.prototype.select = function select( col, tbl ) {
 		col = col.join( ", " );
 	}
 
-	_g.parts.query = ["SELECT", col, "FROM", tbl].join(' ');
+	this.parts.query = ["SELECT", col, "FROM", tbl].join(' ');
 
 	return this;
 };
@@ -87,12 +86,12 @@ Monologue.prototype.join = function join( dir, tbl, stmt ) {
 		dir = "INNER";
 	}
 
-	if( _g.opt.backquote ) {
+	if( this.opt.backquote ) {
 		tbl = this.backquote(tbl);
 	}
 
 	if( typeof stmt === "object" ) {
-		if( _g.opt.backquote ) {
+		if( this.opt.backquote ) {
 			stmt = this.backquote(stmt);
 		}
 
@@ -104,7 +103,7 @@ Monologue.prototype.join = function join( dir, tbl, stmt ) {
 		stmt = fields.join(" AND ");
 	}
 
-	_g.parts.join.push( [dir, "JOIN", tbl, "ON", stmt].join(' ') );
+	this.parts.join.push( [dir, "JOIN", tbl, "ON", stmt].join(' ') );
 
 	return this;
 };
@@ -117,7 +116,7 @@ Monologue.prototype.join = function join( dir, tbl, stmt ) {
 Monologue.prototype.insert = function insert( tbl, p ) {
 	var col = '';
 
-	if( _g.opt.backquote ) {
+	if( this.opt.backquote ) {
 		tbl = this.backquote(tbl);
 	}
 
@@ -136,7 +135,7 @@ Monologue.prototype.insert = function insert( tbl, p ) {
 		col = p;
 	}
 
-	_g.parts.query = ["INSERT INTO", tbl, col].join(' ');
+	this.parts.query = ["INSERT INTO", tbl, col].join(' ');
 
 	return this;
 };
@@ -149,7 +148,7 @@ Monologue.prototype.insert = function insert( tbl, p ) {
 Monologue.prototype.update = function update( tbl, p ) {
 	var col = '';
 
-	if( _g.opt.backquote ) {
+	if( this.opt.backquote ) {
 		tbl = this.backquote(tbl);
 	}
 
@@ -161,7 +160,7 @@ Monologue.prototype.update = function update( tbl, p ) {
 		col = p;
 	}
 
-	_g.parts.query = ["UPDATE", tbl, col].join(' ');
+	this.parts.query = ["UPDATE", tbl, col].join(' ');
 
 	return this;
 };
@@ -171,11 +170,11 @@ Monologue.prototype.update = function update( tbl, p ) {
  */
 
 Monologue.prototype.delete = function _delete( tbl, wh ) {
-	if( _g.opt.backquote ) {
+	if( this.opt.backquote ) {
 		tbl = this.backquote(tbl);
 	}
 
-	_g.parts.query = "DELETE FROM " + tbl;
+	this.parts.query = "DELETE FROM " + tbl;
 	return ( wh ? this.where( wh ) : this );
 };
 
@@ -191,8 +190,8 @@ Monologue.prototype.where = function where( wh, sep ) {
 
 	// check if a previous where statement has been set and glue it
 	// all together
-	_g.parts.where = ( _g.parts.where.length > 0
-		? _g.parts.where + sep + wh
+	this.parts.where = ( this.parts.where.length > 0
+		? this.parts.where + sep + wh
 		: wh );
 
 	this.last_condition = this.where;
@@ -222,7 +221,7 @@ Monologue.prototype.in = function _in( ins ) {
  */
 
 Monologue.prototype.like = function like( like ) {
-	if( _g.opt.escape ) {
+	if( this.opt.escape ) {
 		like = this.escape(like);
 	}
 
@@ -234,7 +233,7 @@ Monologue.prototype.like = function like( like ) {
  */
 
 Monologue.prototype.between = function between( one, two ) {
-	if( _g.opt.escape ) {
+	if( this.opt.escape ) {
 		one = this.escape(one);
 		two = this.escape(two);
 	}
@@ -249,14 +248,14 @@ Monologue.prototype.between = function between( one, two ) {
 Monologue.prototype.group = function group( grp, dir ) {
 	dir = dir || 'ASC';
 
-	if( _g.opt.backquote ) {
+	if( this.opt.backquote ) {
 		grp = this.backquote(grp);
 	}
 
 	if( Array.isArray( grp ) )
 		grp = grp.join( ', ' );
 
-	_g.parts.group.push( grp + " " + dir );
+	this.parts.group.push( grp + " " + dir );
 
 	return this;
 };
@@ -272,8 +271,8 @@ Monologue.prototype.having = function having( hav, sep ) {
 	hav = this.condition(hav, sep);
 
 	// check if a previous statement has been set and glue it all together
-	_g.parts.having = ( _g.parts.having.length > 0
-		? _g.parts.having + sep + hav
+	this.parts.having = ( this.parts.having.length > 0
+		? this.parts.having + sep + hav
 		: hav );
 
 	this.last_condition = this.having;
@@ -311,14 +310,14 @@ Monologue.prototype.condition = function condition(cond, sep) {
 Monologue.prototype.order = function order( ord, dir ) {
 	dir = dir || 'ASC';
 
-	if( _g.opt.backquote ) {
+	if( this.opt.backquote ) {
 		ord = this.backquote(ord);
 	}
 
 	if( Array.isArray( ord ) )
 		ord = ord.join( ', ' );
 
-	_g.parts.order.push( ord + " " + dir );
+	this.parts.order.push( ord + " " + dir );
 
 	return this;
 };
@@ -328,7 +327,7 @@ Monologue.prototype.order = function order( ord, dir ) {
  */
 
 Monologue.prototype.limit = function limit( lim, off ) {
-	_g.parts.limit = ( typeof off === "undefined"
+	this.parts.limit = ( typeof off === "undefined"
 		? '' + lim
 		: lim + ' OFFSET ' + off );
 		// : off + ", " + lim );
@@ -337,7 +336,7 @@ Monologue.prototype.limit = function limit( lim, off ) {
 
 
 Monologue.prototype.union = function union( c, t ) {
-	if( _g.opt.backquote ) {
+	if( this.opt.backquote ) {
 		t = this.backquote(t);
 
 		if( c !== '*' ) c = this.backquote(c);
@@ -350,7 +349,7 @@ Monologue.prototype.union = function union( c, t ) {
 
 	this.reset();
 
-	_g.parts.query = sql += " UNION SELECT " + c + " FROM " + t;
+	this.parts.query = sql += " UNION SELECT " + c + " FROM " + t;
 
 	return this;
 };
@@ -433,7 +432,7 @@ Monologue.prototype.file = function file( f, t, e, l ) {
 		e = undefined;
 	}
 
-	_g.parts.last += " INTO OUTFILE '" + f
+	this.parts.last += " INTO OUTFILE '" + f
 		+ "' FIELDS TERMINATED BY '" + t + "' "
 		+ ( e ? "OPTIONALLY ENCLOSED BY '" + e + "'" : '' )
 		+ " LINES TERMINATED BY '" + l + "'";
@@ -447,22 +446,22 @@ Monologue.prototype.file = function file( f, t, e, l ) {
  */
 
 Monologue.prototype.query = function query() {
-	if( _g.parts.join.length > 0 )
-		_g.parts.query += ' ' + _g.parts.join.join(' ');
-	if( _g.parts.where.length > 0 )
-		_g.parts.query += " WHERE " + _g.parts.where;
-	if( _g.parts.group.length > 0 )
-		_g.parts.query += " GROUP BY " + _g.parts.group.join(',');
-	if( _g.parts.having.length > 0 )
-		_g.parts.query += " HAVING " + _g.parts.having;
-	if( _g.parts.order.length > 0 )
-		_g.parts.query += " ORDER BY " + _g.parts.order.join(',');
-	if( _g.parts.limit.length > 0 )
-		_g.parts.query += " LIMIT " + _g.parts.limit;
-	if( _g.parts.last.length > 0 )
-		_g.parts.query += _g.parts.last;
+	if( this.parts.join.length > 0 )
+		this.parts.query += ' ' + this.parts.join.join(' ');
+	if( this.parts.where.length > 0 )
+		this.parts.query += " WHERE " + this.parts.where;
+	if( this.parts.group.length > 0 )
+		this.parts.query += " GROUP BY " + this.parts.group.join(',');
+	if( this.parts.having.length > 0 )
+		this.parts.query += " HAVING " + this.parts.having;
+	if( this.parts.order.length > 0 )
+		this.parts.query += " ORDER BY " + this.parts.order.join(',');
+	if( this.parts.limit.length > 0 )
+		this.parts.query += " LIMIT " + this.parts.limit;
+	if( this.parts.last.length > 0 )
+		this.parts.query += this.parts.last;
 
-	this.sql = _g.parts.query;
+	this.sql = this.parts.query;
 
 	return this;
 };
@@ -485,16 +484,16 @@ Monologue.prototype.stringify = function stringify( p, s, j ) {
 			if( p[ii] === Object(p[ii]) ) {
 				if( c.length === 0 ) {
 					// grab the column names from the first object
-					_g.parts.columns = Object.keys( p[0] );
+					this.parts.columns = Object.keys( p[0] );
 
-					if( _g.opt.sort_keys )
-						_g.parts.columns.sort();
+					if( this.opt.sort_keys )
+						this.parts.columns.sort();
 
 					// these columns don't get passed through monologue.format
 					// so do it here, if applicable
-					var cols = ( _g.opt.backquote
-						? this.backquote( _g.parts.columns )
-						: _g.parts.columns );
+					var cols = ( this.opt.backquote
+						? this.backquote( this.parts.columns )
+						: this.parts.columns );
 
 					c.push( cols.join(j) );
 				}
@@ -510,16 +509,16 @@ Monologue.prototype.stringify = function stringify( p, s, j ) {
 	}
 
 	else {
-		// if _g.parts.columns is set, it's already sorted (if sorting)
+		// if this.parts.columns is set, it's already sorted (if sorting)
 		// and backquoted (if backquoting). otherwise, columns will be
 		// backquoted when they are formatted
-		if( _g.parts.columns.length === 0 ) {
-			var col = ( _g.opt.sort_keys
+		if( this.parts.columns.length === 0 ) {
+			var col = ( this.opt.sort_keys
 				? Object.keys(p).sort()
 				: Object.keys(p) );
 		}
 		else {
-			var col = _g.parts.columns;
+			var col = this.parts.columns;
 		}
 
 		for( var jj = 0, len = col.length; jj < len; ++jj ) {
@@ -543,7 +542,7 @@ Monologue.prototype.format = function format( v, k, s ) {
 			return this.escape(v);
 		}.bind(this)).join(',');
 
-		var ret = ( _g.opt.backquote && k ? this.backquote( k ) : k )
+		var ret = ( this.opt.backquote && k ? this.backquote( k ) : k )
 			+ " IN (" + vs + ")";
 
 		return ret;
@@ -570,11 +569,11 @@ Monologue.prototype.format = function format( v, k, s ) {
 	// }
 
 	else {
-		if( _g.opt.escape ) {
+		if( this.opt.escape ) {
 			v = this.escape(v);
 		}
 
-		if( k && _g.opt.backquote ) {
+		if( k && this.opt.backquote ) {
 			k = this.backquote(k);
 
 			if( v === 'NULL' && s ) {

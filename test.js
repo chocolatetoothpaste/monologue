@@ -385,3 +385,25 @@ exports.backquote = function(test) {
 
 	test.done();
 };
+
+exports.coexist = function coexist(test) {
+	var m1 = mono().select('*', 'users').where({id: 42}).query().sql;
+	var m2 = mono().insert('messages', {
+		'title': 'hello',
+		'message': 'world'
+	}).query().sql;
+
+	test.deepEqual(
+		m1,
+		'SELECT * FROM `users` WHERE `id` = 42',
+		'select'
+	);
+
+	test.deepEqual(
+		m2,
+		'INSERT INTO `messages` (`title`, `message`) VALUES (\'hello\', \'world\')',
+		'insert'
+	);
+
+	test.done();
+};
