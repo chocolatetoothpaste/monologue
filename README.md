@@ -75,6 +75,7 @@ New methods were added for doing different types of comparison. File a github is
         .having('count').gte(42)
         .query().sql;
 
+[Support Development](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=9KXDJTKMBPXTE)
 
 # API
 
