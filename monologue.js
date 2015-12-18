@@ -659,6 +659,10 @@ Monologue.prototype.backquote = function backquote( col ) {
 	}
 };
 
+Monologue.prototype.prepare = function prepare( p ) {
+	return this.backquote(this.escape(p));
+};
+
 if( typeof module !== "undefined" && module.exports ) {
 	module.exports = monologue;
 }
