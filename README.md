@@ -13,6 +13,14 @@ Monologue - Streamlined query building
 
 **New features**
 
+New shortcut methods for joins, see examples below for usage of mono.join()
+
+	mono().ljoin( table, statment ); // LEFT JOIN
+	mono().rjoin( table, statment ); // RIGHT JOIN
+	mono().lojoin( table, statment ); // LEFT OUTER JOIN
+	mono().rojoin( table, statment ); // RIGHT OUTER JOIN
+
+
 New methods were added for doing different types of comparison. File a github issue if you have some feedback, maybe they're stupid/useless, you be the judge:
 
     // new methods: .gt(), .lt(), .gte(), .lte(), and .not()
@@ -221,4 +229,3 @@ This area needs a ton of work.  You can get some great examples in the section b
         .union('screename, email_address', 'app_users')
         .where({"company":"coName"})
         .query().sql
-
