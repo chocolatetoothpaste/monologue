@@ -108,6 +108,22 @@ Monologue.prototype.join = function join( dir, tbl, stmt ) {
 	return this;
 };
 
+Monologe.prototype.ljoin = function ljoin( tbl, stmt ) {
+	return this.join( 'LEFT', tbl, stmt );
+};
+
+Monologe.prototype.rjoin = function ljoin( tbl, stmt ) {
+	return this.join( 'RIGHT', tbl, stmt );
+};
+
+Monologe.prototype.lojoin = function ljoin( tbl, stmt ) {
+	return this.join( 'LEFT OUTER', tbl, stmt );
+};
+
+Monologe.prototype.rojoin = function ljoin( tbl, stmt ) {
+	return this.join( 'RIGHT OUTER', tbl, stmt );
+};
+
 
 /**
  * t: table, p: params
@@ -605,7 +621,7 @@ Monologue.prototype.escape = function escape( val ) {
 	else if( Object(val) === val ) {
 		var obj = {};
 		for( var i in val ) {
-			obj[this.escape(i)] = val[i];
+			obj[i] = val[i];
 		}
 
 		return obj;
