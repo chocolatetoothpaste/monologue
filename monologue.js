@@ -108,19 +108,19 @@ Monologue.prototype.join = function join( dir, tbl, stmt ) {
 	return this;
 };
 
-Monologe.prototype.ljoin = function ljoin( tbl, stmt ) {
+Monologue.prototype.ljoin = function ljoin( tbl, stmt ) {
 	return this.join( 'LEFT', tbl, stmt );
 };
 
-Monologe.prototype.rjoin = function ljoin( tbl, stmt ) {
+Monologue.prototype.rjoin = function rjoin( tbl, stmt ) {
 	return this.join( 'RIGHT', tbl, stmt );
 };
 
-Monologe.prototype.lojoin = function ljoin( tbl, stmt ) {
+Monologue.prototype.lojoin = function lojoin( tbl, stmt ) {
 	return this.join( 'LEFT OUTER', tbl, stmt );
 };
 
-Monologe.prototype.rojoin = function ljoin( tbl, stmt ) {
+Monologue.prototype.rojoin = function rojoin( tbl, stmt ) {
 	return this.join( 'RIGHT OUTER', tbl, stmt );
 };
 

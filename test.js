@@ -257,18 +257,20 @@ exports.join = function(test) {
 
 	test.deepEqual(
 		mono({backquote: false}).select( "*", "users u" )
-			.join( "LEFT", "posts p", { "p.user_id": "u.id" } )
+			.rjoin( "posts p", { "p.user_id": "u.id" } )
+			.rojoin( "comments c", "p.id = c.post_id" )
 			.where( { "category": "67" } )
 			.query().sql,
-		"SELECT * FROM users u LEFT JOIN posts p ON p.user_id = u.id "
+		"SELECT * FROM users u RIGHT JOIN posts p ON p.user_id = u.id "
+			+ "RIGHT OUTER JOIN comments c ON p.id = c.post_id "
 			+ "WHERE category = '67'",
 		"Specifying join type: LEFT JOIN"
 	);
 
 	var multi = mono({backquote: false}).select( "*", "users u" )
 		.join( "posts p", "p.user_id = u.id" )
-		.join( "LEFT", "post_meta m", "m.post_id = p.id" )
-		.join( "LEFT OUTER", "comments c", "p.id = c.post_id" )
+		.ljoin( "post_meta m", "m.post_id = p.id" )
+		.lojoin( "comments c", "p.id = c.post_id" )
 		.where( { "category": "67" } )
 		.query().sql;
 
