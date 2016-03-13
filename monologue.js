@@ -64,7 +64,7 @@ Monologue.prototype.select = function select( col, tbl ) {
 		if( col !== '*' ) col = this.backquote(col);
 	}
 
-	if( Array.isArray( col ) ) {
+	if( col instanceof Array ) {
 		col = col.join( ", " );
 	}
 
@@ -139,7 +139,7 @@ Monologue.prototype.insert = function insert( tbl, p ) {
 	// I don't know why this would ever NOT be the case
 	if( typeof p === "object" ) {
 		// if it's not a nested array, cheat and make it one
-		if( ! Array.isArray( p ) ) {
+		if( ! ( p instanceof Array ) ) {
 			p = [p];
 		}
 
@@ -268,7 +268,7 @@ Monologue.prototype.group = function group( grp, dir ) {
 		grp = this.backquote(grp);
 	}
 
-	if( Array.isArray( grp ) )
+	if( grp instanceof Array )
 		grp = grp.join( ', ' );
 
 	this.parts.group.push( grp + " " + dir );
@@ -298,7 +298,7 @@ Monologue.prototype.having = function having( hav, sep ) {
 
 
 Monologue.prototype.condition = function condition(cond, sep) {
-	if( Array.isArray( cond ) && Object(cond[0]) === cond[0] ) {
+	if( cond instanceof Array && Object(cond[0]) === cond[0] ) {
 		cond.forEach(function(v, k, arr) {
 			arr[k] = this.stringify( v ).join(' AND ');
 		}.bind(this));
@@ -307,7 +307,7 @@ Monologue.prototype.condition = function condition(cond, sep) {
 		cond = '(' + cond.join(' OR ') + ')';
 	}
 
-	else if( Array.isArray(cond) ) {
+	else if( cond instanceof Array ) {
 		cond = cond.join(' OR ');
 	}
 
@@ -330,7 +330,7 @@ Monologue.prototype.order = function order( ord, dir ) {
 		ord = this.backquote(ord);
 	}
 
-	if( Array.isArray( ord ) )
+	if( ord instanceof Array )
 		ord = ord.join( ', ' );
 
 	this.parts.order.push( ord + " " + dir );
@@ -358,7 +358,7 @@ Monologue.prototype.union = function union( c, t ) {
 		if( c !== '*' ) c = this.backquote(c);
 	}
 
-	if( Array.isArray( c ) )
+	if( c instanceof Array )
 		c = c.join( ", " );
 
 	var sql = this.query().sql;
@@ -375,13 +375,13 @@ Monologue.prototype.not = function not(p, sep) {
 	sep = sep || 'AND';
 	sep = ' ' + sep + ' ';
 
-	if( Array.isArray(p) && Object(p[0]) === p[0]  ) {
+	if( p instanceof Array && Object(p[0]) === p[0]  ) {
 		this.where( p.map(function(v, k) {
 			return this.stringify(v, '!=')
 		}.bind(this)).join(sep) );
 	}
 
-	else if( Array.isArray(p) ) {
+	else if( p instanceof Array ) {
 		this.where( ' NOT' + this.format(p, ''), '' );
 	}
 
@@ -418,7 +418,7 @@ Monologue.prototype.comparison = function comparison(p, sep, eq) {
 
 	this.last_condition = this.last_condition || this.where;
 
-	if( Array.isArray(p) && Object(p[0]) === p[0]  ) {
+	if( p instanceof Array && Object(p[0]) === p[0]  ) {
 		sep = sep.trim();
 
 		this.last_condition.call( this, p.map(function(val) {
@@ -493,7 +493,7 @@ Monologue.prototype.stringify = function stringify( p, s, j ) {
 	s = ( typeof s === "undefined" ? "=" : s );
 	var c = [];
 
-	if( Array.isArray( p ) ) {
+	if( p instanceof Array ) {
 		for( var ii = 0, l = p.length; ii < l; ++ii ) {
 			// if parent is an array and child is an object,
 			// generate an encapsulated list of values (for inserts)
@@ -551,7 +551,7 @@ Monologue.prototype.stringify = function stringify( p, s, j ) {
  */
 
 Monologue.prototype.format = function format( v, k, s ) {
-	if( Array.isArray(v) ) {
+	if( v instanceof Array ) {
 		k = k || '';
 
 		var vs = v.map(function(v, k) {
@@ -610,7 +610,7 @@ Monologue.prototype.format = function format( v, k, s ) {
  */
 
 Monologue.prototype.escape = function escape( val ) {
-	if( Array.isArray(val) ) {
+	if( val instanceof Array ) {
 		return val.map(function(v) {
 			return this.escape(v);
 		// maintaining execution scope to avoid setting a var
@@ -653,7 +653,7 @@ Monologue.prototype.escape = function escape( val ) {
 
 
 Monologue.prototype.backquote = function backquote( col ) {
-	if( Array.isArray(col) ) {
+	if( col instanceof Array ) {
 		return col.map(function(v) {
 			return this.backquote(v);
 		// maintaining execution scope to avoid setting a var
@@ -671,7 +671,7 @@ Monologue.prototype.backquote = function backquote( col ) {
 	}
 
 	else {
-		return '`' + col + '`';
+		return '`' + col + '`';//.replace('.', '`.`');
 	}
 };
 
