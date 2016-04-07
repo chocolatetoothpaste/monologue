@@ -204,8 +204,7 @@ Monologue.prototype.where = function where( wh, sep ) {
 
 	wh = this.condition(wh, sep);
 
-	// check if a previous where statement has been set and glue it
-	// all together
+	// check if a previous where statement has been set and glue it all together
 	this.parts.where = ( this.parts.where.length > 0
 		? this.parts.where + sep + wh
 		: wh );
@@ -484,7 +483,7 @@ Monologue.prototype.query = function query() {
 
 
 /**
- * Takes an object or and array of objects and builds a SQL string
+ * Takes an object or an array of objects and builds a SQL string
  * p: params, s: separator
  */
 
@@ -554,7 +553,7 @@ Monologue.prototype.format = function format( v, k, s ) {
 	if( v instanceof Array ) {
 		k = k || '';
 
-		var vs = v.map(function(v, k) {
+		var vs = v.map(function(v) {
 			return this.escape(v);
 		}.bind(this)).join(',');
 
@@ -610,6 +609,10 @@ Monologue.prototype.format = function format( v, k, s ) {
  */
 
 Monologue.prototype.escape = function escape( val ) {
+	if( val === undefined || val === null ) {
+		return 'NULL';
+	}
+
 	if( val instanceof Array ) {
 		return val.map(function(v) {
 			return this.escape(v);
@@ -625,10 +628,6 @@ Monologue.prototype.escape = function escape( val ) {
 		}
 
 		return obj;
-	}
-
-	if( val === undefined || val === null ) {
-		return 'NULL';
 	}
 
 	switch( typeof val ) {
@@ -652,10 +651,10 @@ Monologue.prototype.escape = function escape( val ) {
 };
 
 
-Monologue.prototype.backquote = function backquote( col ) {
+Monologue.prototype.backquote = function backquote( col, pre ) {
 	if( col instanceof Array ) {
 		return col.map(function(v) {
-			return this.backquote(v);
+			return this.backquote(v, pre);
 		// maintaining execution scope to avoid setting a var
 		// (can't wait to upgrade node 4+)
 		}.bind(this));
@@ -664,19 +663,27 @@ Monologue.prototype.backquote = function backquote( col ) {
 	else if( col === Object(col) ){
 		var obj = {};
 		for( var i in col ) {
-			obj[this.backquote(i)] = col[i];
+			obj[this.backquote(i, pre)] = col[i];
 		}
 
 		return obj;
 	}
 
 	else {
-		return '`' + col + '`';//.replace('.', '`.`');
+		if( typeof pre !== 'undefined' ) {
+			pre += '`.`';
+		}
+		else {
+			pre = '';
+		}
+
+		// return '`' + col.replace(/(\.|\s+)/g, '`$1`') + '`';
+		return '`' + pre + col + '`';
 	}
 };
 
-Monologue.prototype.prepare = function prepare( p ) {
-	return this.backquote(this.escape(p));
+Monologue.prototype.prepare = function prepare( p, pre ) {
+	return this.backquote(this.escape(p), pre);
 };
 
 if( typeof module !== "undefined" && module.exports ) {

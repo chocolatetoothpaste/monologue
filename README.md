@@ -11,14 +11,16 @@ Monologue - Streamlined query building
 
 * In previous versions, when doing multiple inserts(array of objects) the object keys were sorted alphabetically.  Instead of doing this automatically, it is now optional and defaults to not sorting.  This will make the output of the query more predictable based on input.  If you would like to enable sorting, you can pass `monologue({sort_keys: true})` as an option.  It is not necessary to sort keys, monologue puts your insert statements in the correct order (based on the order of the first object in the collection), but the option is there for unit testing compatibility and for analyzing output in testing.
 
+[Support Development](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=9KXDJTKMBPXTE)
+
 **New features**
 
 New shortcut methods for joins, see examples below for usage of mono.join()
 
-	mono().ljoin( table, statment ); // LEFT JOIN
-	mono().rjoin( table, statment ); // RIGHT JOIN
-	mono().lojoin( table, statment ); // LEFT OUTER JOIN
-	mono().rojoin( table, statment ); // RIGHT OUTER JOIN
+	mono().ljoin( table, statement ); // LEFT JOIN
+	mono().rjoin( table, statement ); // RIGHT JOIN
+	mono().lojoin( table, statement ); // LEFT OUTER JOIN
+	mono().rojoin( table, statement ); // RIGHT OUTER JOIN
 
 
 New methods were added for doing different types of comparison. File a github issue if you have some feedback, maybe they're stupid/useless, you be the judge:
@@ -82,8 +84,6 @@ New methods were added for doing different types of comparison. File a github is
         .select(['sum(id) as count'], 'comments')
         .having('count').gte(42)
         .query().sql;
-
-[Support Development](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=9KXDJTKMBPXTE)
 
 # API
 
