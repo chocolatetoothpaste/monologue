@@ -21,8 +21,6 @@ function Monologue(opt) {
 		}
 	}
 
-	this.sql = '';
-
 	this.parts = {};
 
 	// store whether where() or having() was used last
@@ -40,7 +38,7 @@ function Monologue(opt) {
 
 Monologue.prototype.reset = function reset() {
 	this.parts = {
-		query: '',
+		sql: '',
 		join: [],
 		where: '',
 		having: '',
@@ -68,7 +66,7 @@ Monologue.prototype.select = function select( col, tbl ) {
 		col = col.join( ", " );
 	}
 
-	this.parts.query = ["SELECT", col, "FROM", tbl].join(' ');
+	this.parts.stmt = ["SELECT", col, "FROM", tbl].join(' ');
 
 	return this;
 };
@@ -151,7 +149,7 @@ Monologue.prototype.insert = function insert( tbl, p ) {
 		col = p;
 	}
 
-	this.parts.query = ["INSERT INTO", tbl, col].join(' ');
+	this.parts.stmt = ["INSERT INTO", tbl, col].join(' ');
 
 	return this;
 };
@@ -176,7 +174,7 @@ Monologue.prototype.update = function update( tbl, p ) {
 		col = p;
 	}
 
-	this.parts.query = ["UPDATE", tbl, col].join(' ');
+	this.parts.stmt = ["UPDATE", tbl, col].join(' ');
 
 	return this;
 };
@@ -190,7 +188,7 @@ Monologue.prototype.delete = function _delete( tbl, wh ) {
 		tbl = this.backquote(tbl);
 	}
 
-	this.parts.query = "DELETE FROM " + tbl;
+	this.parts.stmt = "DELETE FROM " + tbl;
 	return ( wh ? this.where( wh ) : this );
 };
 
@@ -360,11 +358,11 @@ Monologue.prototype.union = function union( c, t ) {
 	if( c instanceof Array )
 		c = c.join( ", " );
 
-	var sql = this.query().sql;
+	var sql = this.sql();
 
 	this.reset();
 
-	this.parts.query = sql += " UNION SELECT " + c + " FROM " + t;
+	this.parts.stmt = sql += " UNION SELECT " + c + " FROM " + t;
 
 	return this;
 };
@@ -442,7 +440,7 @@ Monologue.prototype.comparison = function comparison(p, sep, eq) {
  */
 
 Monologue.prototype.file = function file( f, t, e, l ) {
-	if( typeof l === "undefined" ) {
+	if( typeof l === 'undefined' ) {
 		l = e;
 		e = undefined;
 	}
@@ -460,25 +458,32 @@ Monologue.prototype.file = function file( f, t, e, l ) {
  * Compile each part together and generate a valid SQL statement
  */
 
-Monologue.prototype.query = function query() {
+Monologue.prototype.sql = function sql() {
+	// start from scratch each time this is called
+	this.parts.sql = this.parts.stmt;
+
 	if( this.parts.join.length > 0 )
-		this.parts.query += ' ' + this.parts.join.join(' ');
+		this.parts.sql += ' ' + this.parts.join.join(' ');
+
 	if( this.parts.where.length > 0 )
-		this.parts.query += " WHERE " + this.parts.where;
+		this.parts.sql += ' WHERE ' + this.parts.where;
+
 	if( this.parts.group.length > 0 )
-		this.parts.query += " GROUP BY " + this.parts.group.join(',');
+		this.parts.sql += ' GROUP BY ' + this.parts.group.join(',');
+
 	if( this.parts.having.length > 0 )
-		this.parts.query += " HAVING " + this.parts.having;
+		this.parts.sql += ' HAVING ' + this.parts.having;
+
 	if( this.parts.order.length > 0 )
-		this.parts.query += " ORDER BY " + this.parts.order.join(',');
+		this.parts.sql += ' ORDER BY ' + this.parts.order.join(',');
+
 	if( this.parts.limit.length > 0 )
-		this.parts.query += " LIMIT " + this.parts.limit;
+		this.parts.sql += ' LIMIT ' + this.parts.limit;
+
 	if( this.parts.last.length > 0 )
-		this.parts.query += this.parts.last;
+		this.parts.sql += this.parts.last;
 
-	this.sql = this.parts.query;
-
-	return this;
+	return this.parts.sql;
 };
 
 
@@ -596,8 +601,8 @@ Monologue.prototype.format = function format( v, k, s ) {
 			}
 		}
 
-		// if s and/or k is undefined, it is an array of values so just format value
-		// and ditch the key and separator
+		// if s and/or k is undefined, it is an array of values so just format
+		// value and ditch the key and separator
 		return ( k && s ? k + " " + s + " " : '' ) + v;
 	}
 
