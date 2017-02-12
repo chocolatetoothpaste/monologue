@@ -29,7 +29,7 @@ No sanitization is performed as part of .query(), so use it carefully.  Subseque
 A new method was added in 0.7.0, taking advantage of the recent API changes. It's pretty self-explanatory:
 
     // 'EXPLAIN SELECT * FROM `users` WHERE `email` = 'some@example.com'
-    mono().select('*', 'users').where({email: 'some@example.com'}).explain()
+    monologue().select('*', 'users').where({email: 'some@example.com'}).explain()
 
 # API
 
