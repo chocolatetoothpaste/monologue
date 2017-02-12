@@ -38,6 +38,7 @@ function Monologue(opt) {
 
 Monologue.prototype.reset = function reset() {
 	this.parts = {
+		stmt: '',
 		sql: '',
 		join: [],
 		where: '',
@@ -350,7 +351,7 @@ Monologue.prototype.limit = function limit( lim, off ) {
 	this.parts.limit = ( typeof off === "undefined"
 		? '' + lim
 		: lim + ' OFFSET ' + off );
-		// : off + ", " + lim );
+
 	return this;
 };
 
