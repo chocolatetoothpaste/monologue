@@ -7,7 +7,7 @@ Monologue - Streamlined query building
 
 ***Breaking changes for 0.7.0***
 
-The API was reworked to clear up some annoyances and allow for free-hand queries to be written without requiring a specific method ot be written. When a query is ready to be compiled, instead of calling .query() and referencing .sql, you simply call .sql().  Example:
+The API was reworked to clear up some annoyances and allow for free-hand queries to be written when a specific method does not exist. When a query is ready to be compiled, instead of calling `.query()` and referencing `.sql`, you simply call `.sql()`.  Example:
 
     monologue()
         .select( "*", "users u" )
@@ -15,14 +15,14 @@ The API was reworked to clear up some annoyances and allow for free-hand queries
         .where( { "category": "67" } )
         .sql();
 
-The old method for compiling queries, .query(), has been repurposed for constructing queries that do not have a built in starter method (like .select(), .insert(), etc). These queries can be started like this:
+The old method for compiling queries, `.query()`, has been repurposed for constructing queries that do not have a built in starter method (like `.select()`, `.insert()`, etc). These queries can be started like this:
 
     monologue()
         .query('SHOW TABLES FROM table')
         .where({some: 'condition'})
         .sql();
 
-No sanitization is performed as part of .query(), so use it carefully.  Subsequent methods will sanitize per their normal behavior.
+No sanitization is performed as part of `.query()`, so use it carefully.  Subsequent methods will sanitize per their normal behavior.
 
 ***New Feature***
 
