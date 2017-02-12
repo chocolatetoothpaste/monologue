@@ -181,6 +181,10 @@ Monologue.prototype.update = function update( tbl, p ) {
 };
 
 
+/**
+ * Free-hand queries
+ */
+ 
 Monologue.prototype.query = function query(stmt) {
 	this.parts.stmt = stmt;
 
