@@ -15,7 +15,7 @@ The API was reworked to clear up some annoyances and allow for free-hand queries
         .where( { "category": "67" } )
         .sql();
 
-When constructing queries that do not have a built in method (like .select(), .insert(), etc) these queries can be started like this:
+The old method for compiling queries, .query(), has been repurposed for constructing queries that do not have a built in starter method (like .select(), .insert(), etc). These queries can be started like this:
 
     monologue()
         .query('SHOW TABLES FROM table')
