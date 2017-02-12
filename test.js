@@ -241,6 +241,27 @@ exports.delete = function(test) {
 	test.done();
 };
 
+exports.query = function(test) {
+	test.deepEqual(
+		mono()
+			.query('SHOW TABLES FROM somedb')
+			.sql(),
+		"SHOW TABLES FROM somedb",
+		"Simple QUERY"
+	);
+
+	test.deepEqual(
+		mono()
+			.query('SHOW TABLES FROM another')
+			.where({table: 'condition'})
+			.sql(),
+		"SHOW TABLES FROM another WHERE `table` = 'condition'",
+		"Simple QUERY with clause"
+	);
+
+	test.done();
+};
+
 exports.join = function(test) {
 	test.deepEqual(
 		mono({backquote: false})
@@ -384,7 +405,15 @@ exports.backquote = function(test) {
 		'`cupcake`'
 	);
 
+	test.done();
+};
 
+exports.explain = function explain(test) {
+	test.deepEqual(
+		mono().select('*', 'users').where({email: 'some@example.com'}).explain(),
+		'EXPLAIN SELECT * FROM `users` WHERE `email` = \'some@example.com\''
+	);
+	
 	test.done();
 };
 

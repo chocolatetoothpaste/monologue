@@ -7,7 +7,29 @@ Monologue - Streamlined query building
 
 ***Breaking changes for 0.7.0***
 
-The API was reworked to clear up some annoyances and allow for free-hand queries to be written without 
+The API was reworked to clear up some annoyances and allow for free-hand queries to be written without requiring a specific method ot be written. When a query is ready to be compiled, instead of calling .query() and referencing .sql, you simply call .sql().  Example:
+
+    monologue()
+        .select( "*", "users u" )
+        .join( "posts p", "p.user_id = u.id" )
+        .where( { "category": "67" } )
+        .sql();
+
+When constructing queries that do not have a built in method (like .select(), .insert(), etc) these queries can be started like this:
+
+    monologue()
+        .query('SHOW TABLES FROM table')
+        .where({some: 'condition'})
+        .sql();
+
+No sanitization is performed as part of .query(), so use it carefully.  Subsequent methods will sanitize per their normal behavior.
+
+***New Feature***
+
+A new method was added in 0.7.0, taking advantage of the recent API changes. It's pretty self-explanatory:
+
+    // 'EXPLAIN SELECT * FROM `users` WHERE `email` = 'some@example.com'
+    mono().select('*', 'users').where({email: 'some@example.com'}).explain()
 
 # API
 

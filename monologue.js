@@ -180,6 +180,13 @@ Monologue.prototype.update = function update( tbl, p ) {
 };
 
 
+Monologue.prototype.query = function query(stmt) {
+	this.parts.stmt = stmt;
+
+	return this;
+};
+
+
 /**
  */
 
@@ -484,6 +491,11 @@ Monologue.prototype.sql = function sql() {
 		this.parts.sql += this.parts.last;
 
 	return this.parts.sql;
+};
+
+
+Monologue.prototype.explain = function explain() {
+	return 'EXPLAIN ' + this.sql();
 };
 
 
