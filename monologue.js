@@ -57,6 +57,11 @@ Monologue.prototype.reset = function reset() {
  */
 
 Monologue.prototype.select = function select( col, tbl ) {
+	if( typeof tbl === 'undefined' ) {
+		tbl = col;
+		col = '*';
+	}
+
 	if( this.opt.backquote ) {
 		tbl = this.backquote(tbl);
 
@@ -387,6 +392,21 @@ Monologue.prototype.not = function not(p, sep) {
 	else if( Object(p) === p ) {
 		this.where( this.stringify(p, '!=').join(sep) );
 	}
+
+	//*** not sure if these 2 blocks belong. they make queries read more
+	//*** naturally but by adding complexity...
+
+	//*** sample usage
+	// mono().select('dinner').where('meat').not('pork').sql()
+	// mono().select('dinner').where('meat').not(null).sql()
+
+	// else if( typeof p === 'string' ) {
+	// 	this.where( this.format(p), '!=' );
+	// }
+
+	// else if( p === null ) {
+	// 	this.where( ' IS NOT NULL', '' );
+	// }
 
 	else {
 		this.where( ' NOT', '' );

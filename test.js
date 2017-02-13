@@ -31,7 +31,7 @@ exports.comparisons = function comparisons(test) {
 
 	test.deepEqual(
 		mono()
-			.select('*', 'media')
+			.select('media')
 			.not({'type': null})
 			.gt({file_size: 0, length: 24325})
 			.sql(),
@@ -174,6 +174,16 @@ exports.select = function(test) {
 			+ "(`flavor` = 'salty' AND `peanuts` = true)",
 		"parenthetical where statements"
 	);
+
+	test.deepEqual(
+		mono()
+		.select('movies')
+		.where({type: 'comedy'})
+		.sql(),
+		"SELECT * FROM `movies` WHERE `type` = 'comedy'",
+		"SELECT without column"
+	);
+
 
 	test.done();
 };
