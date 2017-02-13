@@ -693,7 +693,7 @@ Monologue.prototype.backquote = function backquote( col, pre ) {
 		//*** handy when column prefixes must be handled manually
 		//*** the regex seems to be working nicley in prelim tests though
 
-		// return '`' + col.replace(/(?![a-z])(\.)(?=[a-z])+/gi, '`$1`') + '`';
+		// return '`' + col.replace(/(?!\w)(\.)(?=[a-z])+/gi, '`$1`') + '`';
 
 		return '`' + pre + col + '`';
 	}
