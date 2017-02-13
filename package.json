@@ -1,6 +1,6 @@
 {
   "name": "monologue",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Streamlined MySQL query building",
   "main": "./monologue.js",
   "author": {
@@ -27,6 +27,6 @@
     "url": "git://github.com/chocolatetoothpaste/monologue"
   },
   "devDependencies": {
-    "nodeunit": "^0.9.1"
+    "nodeunit": "^0.11.0"
   }
 }
