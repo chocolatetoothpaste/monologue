@@ -5,6 +5,10 @@ Monologue - Streamlined query building
 
 [Support Development](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=9KXDJTKMBPXTE)
 
+***NOTICE***
+
+Starting in version 0.8.0, Monologue will only be compatible with 4.latest and up to take advantage of ES6 features.  Do not upgrade if you are still using 0.12 or lower.
+
 ***Breaking changes for 0.7.0***
 
 The API was reworked to clear up some annoyances and allow for free-hand queries to be written when a specific method does not exist. When a query is ready to be compiled, instead of calling `.query()` and referencing `.sql`, you simply call `.sql()`.  Example:
