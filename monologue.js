@@ -38,6 +38,7 @@ function Monologue(opt) {
 
 Monologue.prototype.reset = function reset() {
 	this.parts = {
+		test: 'search',
 		stmt: '',
 		sql: '',
 		join: [],
@@ -209,20 +210,53 @@ Monologue.prototype.delete = function _delete( tbl, wh ) {
  */
 
 Monologue.prototype.where = function where( wh, sep ) {
-	sep = ( typeof sep === "undefined" ? "AND" : sep );
-	sep = ( sep.length > 0 ? " " + sep + " " : sep );
-
-	wh = this.condition(wh, sep);
-
-	// check if a previous where statement has been set and glue it all together
-	this.parts.where = ( this.parts.where.length > 0
-		? this.parts.where + sep + wh
-		: wh );
+	this.parts.where = this.condition(wh, sep, this.parts.where);
 
 	this.last_condition = this.where;
 
 	return this;
 };
+
+
+/**
+ */
+
+Monologue.prototype.having = function having( hav, sep ) {
+	this.parts.having = this.condition(hav, sep, this.parts.having);
+
+	this.last_condition = this.having;
+
+	return this;
+};
+
+
+Monologue.prototype.condition = function condition(cond, sep, part) {
+	sep = ( typeof sep === "undefined" ? "AND" : sep );
+	sep = ( sep.length > 0 ? " " + sep + " " : sep );
+
+	if( cond instanceof Array && Object(cond[0]) === cond[0] ) {
+		cond.forEach(function(v, k, arr) {
+			arr[k] = this.stringify( v ).join(' AND ');
+		}.bind(this));
+
+		// join an array of objects with OR
+		cond = '(' + cond.join(' OR ') + ')';
+	}
+
+	else if( cond instanceof Array ) {
+		cond = cond.join(' OR ');
+	}
+
+	else if( cond === Object(cond) ) {
+		// stringify the where statements
+		cond = this.stringify( cond ).join( sep );
+	}
+
+	part = ( part.length > 0 ? part + sep + cond : cond );
+
+	return part;
+};
+
 
 Monologue.prototype.and = function and( wh ) {
 	return this.where( wh, 'AND' );
@@ -283,49 +317,6 @@ Monologue.prototype.group = function group( grp, dir ) {
 	this.parts.group.push( grp + " " + dir );
 
 	return this;
-};
-
-
-/**
- */
-
-Monologue.prototype.having = function having( hav, sep ) {
-	sep = ( typeof sep === "undefined" ? "AND" : sep );
-	sep = ( sep.length > 0 ? " " + sep + " " : sep );
-
-	hav = this.condition(hav, sep);
-
-	// check if a previous statement has been set and glue it all together
-	this.parts.having = ( this.parts.having.length > 0
-		? this.parts.having + sep + hav
-		: hav );
-
-	this.last_condition = this.having;
-
-	return this;
-};
-
-
-Monologue.prototype.condition = function condition(cond, sep) {
-	if( cond instanceof Array && Object(cond[0]) === cond[0] ) {
-		cond.forEach(function(v, k, arr) {
-			arr[k] = this.stringify( v ).join(' AND ');
-		}.bind(this));
-
-		// join an array of objects with OR
-		cond = '(' + cond.join(' OR ') + ')';
-	}
-
-	else if( cond instanceof Array ) {
-		cond = cond.join(' OR ');
-	}
-
-	else if( cond === Object(cond) ) {
-		// stringify the where statements
-		cond = this.stringify( cond ).join( sep );
-	}
-
-	return cond;
 };
 
 
