@@ -38,7 +38,6 @@ function Monologue(opt) {
 
 Monologue.prototype.reset = function reset() {
 	this.parts = {
-		test: 'search',
 		stmt: '',
 		sql: '',
 		join: [],
