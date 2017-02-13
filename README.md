@@ -30,7 +30,7 @@ No sanitization is performed as part of `.query()`, so use it carefully.  Subseq
 
 ***New Feature***
 
-`.select()` was updated in 0.7.1 to accept only a table name, making '*' the implicit column selection.  Example:
+`.select()` was updated in 0.7.1 to *optionally* accept a table name only, making '*' the implicit column selection.  Example:
 
     // 'SELECT * FROM `users` WHERE `email` = 'some@example.com'
     monologue().select('users').where({email: 'some@example.com'}).sql()
