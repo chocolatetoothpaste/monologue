@@ -120,7 +120,7 @@ exports.comparisons = function comparisons(test) {
 exports.select = function(test) {
 
 	test.deepEqual(
-		mono().select( "*", "users")
+		mono().select( "users")
 			.where( { "id": [1,2,3,4,5,6] } ) // alternative to where("id").in([...])
 			.and( '`date_time`' ).between( '2012-09-12', '2013-01-20')
 			.group( ['type', 'hamster' ] ) // out of order, also passing "OR" as separator
@@ -428,6 +428,7 @@ exports.explain = function explain(test) {
 };
 
 exports.coexist = function coexist(test) {
+	// make sure instances stay separate
 	var m1 = mono().select('*', 'users').where({id: 42}).sql();
 	var m2 = mono().insert('messages', {
 		'title': 'hello',

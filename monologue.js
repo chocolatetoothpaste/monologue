@@ -73,6 +73,7 @@ Monologue.prototype.select = function select( col, tbl ) {
 	}
 
 	this.parts.stmt = ["SELECT", col, "FROM", tbl].join(' ');
+	// this.parts.stmt = `SELECT ${col} FROM ${tbl}`;
 
 	return this;
 };
@@ -102,12 +103,14 @@ Monologue.prototype.join = function join( dir, tbl, stmt ) {
 		var fields = [];
 		for( var ii in stmt ) {
 			fields.push( ii + " = " + stmt[ii] );
+			// fields.push( `${ii} = ${stmt[ii]}` );
 		}
 
 		stmt = fields.join(" AND ");
 	}
 
 	this.parts.join.push( [dir, "JOIN", tbl, "ON", stmt].join(' ') );
+	// this.parts.join.push( `${dir} JOIN ${tbl} ON ${stmt}` );
 
 	return this;
 };
@@ -149,6 +152,7 @@ Monologue.prototype.insert = function insert( tbl, p ) {
 
 		var a = this.stringify( p, "");
 		col = "(" + a.shift() + ") VALUES " + a.join(',');
+		// col = `(${a.shift()}) VALUES ${a.join(',')}`;
 	}
 
 	else if( typeof p === "string" ) {
@@ -156,6 +160,7 @@ Monologue.prototype.insert = function insert( tbl, p ) {
 	}
 
 	this.parts.stmt = ["INSERT INTO", tbl, col].join(' ');
+	// this.parts.stmt = `INSERT INTO ${tbl} ${col}`;
 
 	return this;
 };
@@ -180,7 +185,8 @@ Monologue.prototype.update = function update( tbl, p ) {
 		col = p;
 	}
 
-	this.parts.stmt = ["UPDATE", tbl, col].join(' ');
+	this.parts.stmt = 'UPDATE ' + tbl + ' ' + col;
+	// this.parts.stmt = `UPDATE ${tbl} ${col}`;
 
 	return this;
 };
@@ -206,6 +212,7 @@ Monologue.prototype.delete = function _delete( tbl, wh ) {
 	}
 
 	this.parts.stmt = "DELETE FROM " + tbl;
+	// this.parts.stmt = `DELETE FROM ${tbl}`;
 	return ( wh ? this.where( wh ) : this );
 };
 
@@ -214,7 +221,7 @@ Monologue.prototype.delete = function _delete( tbl, wh ) {
  */
 
 Monologue.prototype.where = function where( wh, sep ) {
-	this.parts.where = this.condition(wh, sep, this.parts.where);
+	this.parts.where = condition.call( this, wh, sep, this.parts.where );
 
 	this.last_condition = this.where;
 
@@ -226,7 +233,7 @@ Monologue.prototype.where = function where( wh, sep ) {
  */
 
 Monologue.prototype.having = function having( hav, sep ) {
-	this.parts.having = this.condition(hav, sep, this.parts.having);
+	this.parts.having = condition.call( this, hav, sep, this.parts.having );
 
 	this.last_condition = this.having;
 
@@ -234,7 +241,7 @@ Monologue.prototype.having = function having( hav, sep ) {
 };
 
 
-Monologue.prototype.condition = function condition(cond, sep, part) {
+function condition(cond, sep, part) {
 	sep = ( typeof sep === "undefined" ? "AND" : sep );
 	sep = ( sep.length > 0 ? " " + sep + " " : sep );
 
@@ -245,6 +252,8 @@ Monologue.prototype.condition = function condition(cond, sep, part) {
 
 		// join an array of objects with OR
 		cond = '(' + cond.join(' OR ') + ')';
+		// cond = cond.join(' OR ')
+		// cond = `(${cond})`;
 	}
 
 	else if( cond instanceof Array ) {
@@ -289,6 +298,7 @@ Monologue.prototype.like = function like( like ) {
 	}
 
 	return this.where(" LIKE " + like, '');
+	// return this.where(` LIKE ${like}`, '');
 };
 
 
@@ -302,6 +312,7 @@ Monologue.prototype.between = function between( one, two ) {
 	}
 
 	return this.where(" BETWEEN " + one + " AND " + two, '');
+	// return this.where(` BETWEEN ${one} AND ${two}`, '');
 };
 
 
@@ -319,6 +330,7 @@ Monologue.prototype.group = function group( grp, dir ) {
 		grp = grp.join( ', ' );
 
 	this.parts.group.push( grp + " " + dir );
+	// this.parts.group.push( `${grp} ${dir}` );
 
 	return this;
 };
@@ -338,6 +350,7 @@ Monologue.prototype.order = function order( ord, dir ) {
 		ord = ord.join( ', ' );
 
 	this.parts.order.push( ord + " " + dir );
+	// this.parts.order.push( `${ord} ${dir}` );
 
 	return this;
 };
@@ -350,6 +363,7 @@ Monologue.prototype.limit = function limit( lim, off ) {
 	this.parts.limit = ( typeof off === "undefined"
 		? '' + lim
 		: lim + ' OFFSET ' + off );
+		// : `${lim} OFFSET ${off}` );
 
 	return this;
 };
@@ -370,6 +384,7 @@ Monologue.prototype.union = function union( c, t ) {
 	this.reset();
 
 	this.parts.stmt = sql += " UNION SELECT " + c + " FROM " + t;
+	// this.parts.stmt = `${sql} UNION SELECT ${c} FROM ${t}`;
 
 	return this;
 };
@@ -394,7 +409,7 @@ Monologue.prototype.not = function not(p, sep) {
 	}
 
 	//*** not sure if these 2 blocks belong. they make queries read more
-	//*** naturally but by adding complexity...
+	//*** naturally, but by adding complexity...
 
 	//*** sample usage
 	// mono().select('dinner').where('meat').not('pork').sql()
@@ -591,29 +606,10 @@ Monologue.prototype.format = function format( v, k, s ) {
 
 		var ret = ( this.opt.backquote && k ? this.backquote( k ) : k )
 			+ " IN (" + vs + ")";
+			// + ` IN (${vs})`;
 
 		return ret;
 	}
-
-	// else if( v === Object(v) ) {
-	// 	var c = [];
-	// 	for( var i in v ) {
-	// 		if( s ) {
-	// 			c.push(this.format(v[i], i, s))
-	// 		}
-	// 		else {
-	// 			c.push(this.format(v[i]))
-	// 		}
-	// 	}
-
-	// 	c = c.join(',');
-
-	// 	if( ! s ) {
-	// 		c = "(" + c + ")";
-	// 	}
-
-	// 	return c;
-	// }
 
 	else {
 		if( this.opt.escape ) {
@@ -680,6 +676,7 @@ Monologue.prototype.escape = function escape( val ) {
 	});
 
 	return "'" + val + "'";
+	// return `'${val}'`;
 };
 
 
@@ -716,6 +713,7 @@ Monologue.prototype.backquote = function backquote( col, pre ) {
 		// return '`' + col.replace(/(?!\w)(\.)(?=[a-z])+/gi, '`$1`') + '`';
 
 		return '`' + pre + col + '`';
+		// return `\`${pre}${col}\``;
 	}
 };
 
