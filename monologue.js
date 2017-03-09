@@ -1,6 +1,36 @@
 (function(exports) {
 "use strict";
 
+function condition(cond, sep, part) {
+	sep = ( typeof sep === "undefined" ? "AND" : sep );
+	sep = ( sep.length > 0 ? " " + sep + " " : sep );
+
+	if( cond instanceof Array && Object(cond[0]) === cond[0] ) {
+		cond.forEach(function(v, k, arr) {
+			arr[k] = this.stringify( v ).join(' AND ');
+		}.bind(this));
+
+		// join an array of objects with OR
+		cond = '(' + cond.join(' OR ') + ')';
+		// cond = cond.join(' OR ')
+		// cond = `(${cond})`;
+	}
+
+	else if( cond instanceof Array ) {
+		cond = cond.join(' OR ');
+	}
+
+	else if( cond === Object(cond) ) {
+		// stringify the where statements
+		cond = this.stringify( cond ).join( sep );
+	}
+
+	part = ( part.length > 0 ? part + sep + cond : cond );
+
+	return part;
+}
+
+
 function monologue(opt) {
 	return new Monologue(opt);
 }
@@ -24,8 +54,9 @@ function Monologue(opt) {
 	this.parts = {};
 
 	// store whether where() or having() was used last
+	// default is "where" (presumably used more often)
 	// (I hope this doesn't get ugly)
-	this.last_condition = null;
+	this.last_condition = this.where;
 
 	// set the inital parts container
 	this.reset();
@@ -84,7 +115,7 @@ Monologue.prototype.select = function select( col, tbl ) {
  */
 
 Monologue.prototype.join = function join( dir, tbl, stmt ) {
-	// default to inner join if unspecified (parity with mysql)
+	// default to inner join if not specified (parity with mysql)
 	if( typeof stmt === "undefined" ) {
 		stmt = tbl;
 		tbl = dir;
@@ -133,18 +164,28 @@ Monologue.prototype.rojoin = function rojoin( tbl, stmt ) {
 
 
 /**
- * t: table, p: params
+ * t: table, p: params, d: data
  */
 
-Monologue.prototype.insert = function insert( tbl, p ) {
+Monologue.prototype.insert = function insert( tbl, p, d ) {
 	var col = '';
 
 	if( this.opt.backquote ) {
 		tbl = this.backquote(tbl);
 	}
 
-	// I don't know why this would ever NOT be the case
-	if( typeof p === "object" ) {
+	if( p instanceof Array && d instanceof Array ) {
+		var p = this.backquote( p ).join(',');
+		var d = this.stringify( d, "");
+		// stringify should be refactored a bit so this isn't necessary
+		d.shift();
+		d = d.join(',');
+
+		col = "(" + p + ") VALUES " + d;
+	}
+
+	// Array is also an object
+	else if( typeof p === "object" ) {
 		// if it's not a nested array, cheat and make it one
 		if( ! ( p instanceof Array ) ) {
 			p = [p];
@@ -238,36 +279,6 @@ Monologue.prototype.having = function having( hav, sep ) {
 	this.last_condition = this.having;
 
 	return this;
-};
-
-
-function condition(cond, sep, part) {
-	sep = ( typeof sep === "undefined" ? "AND" : sep );
-	sep = ( sep.length > 0 ? " " + sep + " " : sep );
-
-	if( cond instanceof Array && Object(cond[0]) === cond[0] ) {
-		cond.forEach(function(v, k, arr) {
-			arr[k] = this.stringify( v ).join(' AND ');
-		}.bind(this));
-
-		// join an array of objects with OR
-		cond = '(' + cond.join(' OR ') + ')';
-		// cond = cond.join(' OR ')
-		// cond = `(${cond})`;
-	}
-
-	else if( cond instanceof Array ) {
-		cond = cond.join(' OR ');
-	}
-
-	else if( cond === Object(cond) ) {
-		// stringify the where statements
-		cond = this.stringify( cond ).join( sep );
-	}
-
-	part = ( part.length > 0 ? part + sep + cond : cond );
-
-	return part;
 };
 
 
@@ -449,8 +460,6 @@ Monologue.prototype.gte = function gte(p, sep) {
 Monologue.prototype.comparison = function comparison(p, sep, eq) {
 	sep = sep || 'AND';
 	sep = ' ' + sep + ' ';
-
-	this.last_condition = this.last_condition || this.where;
 
 	if( p instanceof Array && Object(p[0]) === p[0]  ) {
 		sep = sep.trim();

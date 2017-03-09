@@ -212,6 +212,19 @@ exports.insert = function(test) {
 		"Single INSERT"
 	);
 
+	test.deepEqual(
+		mono()
+			.insert( 'users', ['email', 'first_name', 'last_name'], [
+				['test@user.com', 'Test', 'User'],
+				['example@sample.com', 'Sample', 'Person'],
+				['fake@name.com', 'Fake', 'Name']
+			]).sql(),
+		"INSERT INTO `users` (`email`,`first_name`,`last_name`) VALUES "
+			+ "('test@user.com', 'Test', 'User'),"
+			+ "('example@sample.com', 'Sample', 'Person'),"
+			+ "('fake@name.com', 'Fake', 'Name')"
+	)
+
 	test.done();
 };
 
