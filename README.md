@@ -30,15 +30,15 @@ No sanitization is performed as part of `.query()`, so use it carefully.  Subseq
 
 ***New Feature***
 
-`.insert()` was updated in 0.7.4 to accept an array of columns and an array of arrays of values as separate arguments.
+`.insert()` was updated in 0.7.4 to alternatively accept an array of columns and an array of arrays of values as separate arguments. (the old way still works too)
 Example:
 
     monologue()
-    .insert( 'users', ['email', 'first_name', 'last_name'], [
-        ['test@user.com', 'Test', 'User'],
-        ['example@sample.com', 'Sample', 'Person'],
-        ['fake@name.com', 'Fake', 'Name']
-    ]).sql();
+        .insert( 'users', ['email', 'first_name', 'last_name'], [
+            ['test@user.com', 'Test', 'User'],
+            ['example@sample.com', 'Sample', 'Person'],
+            ['fake@name.com', 'Fake', 'Name']
+        ]).sql();
 
 `.select()` was updated in 0.7.1 to *optionally* accept a table name only, making '*' the implicit column selection.
 Example:
