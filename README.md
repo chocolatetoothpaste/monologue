@@ -30,7 +30,18 @@ No sanitization is performed as part of `.query()`, so use it carefully.  Subseq
 
 ***New Feature***
 
-`.select()` was updated in 0.7.1 to *optionally* accept a table name only, making '*' the implicit column selection.  Example:
+`.insert()` was updated in 0.7.4 to accept an array of columns and an array of arrays of values as separate arguments.
+Example:
+
+    monologue()
+    .insert( 'users', ['email', 'first_name', 'last_name'], [
+        ['test@user.com', 'Test', 'User'],
+        ['example@sample.com', 'Sample', 'Person'],
+        ['fake@name.com', 'Fake', 'Name']
+    ]).sql();
+
+`.select()` was updated in 0.7.1 to *optionally* accept a table name only, making '*' the implicit column selection.
+Example:
 
     // 'SELECT * FROM `users` WHERE `email` = 'some@example.com'
     monologue().select('users').where({email: 'some@example.com'}).sql()
@@ -161,6 +172,15 @@ This area needs a ton of work.  You can get some great examples in the section b
         } )
         .sql();
 
+    // INSERT, passing array of column names and array of values
+    // output: INSERT INTO `users` (`email`,`first_name`,`last_name`) VALUES ('test@user.com', 'Test', 'User'),('example@sample.com', 'Sample', 'Person'),('fake@name.com', 'Fake', 'Name')
+
+    monologue()
+        .insert( 'users', ['email', 'first_name', 'last_name'], [
+            ['test@user.com', 'Test', 'User'],
+            ['example@sample.com', 'Sample', 'Person'],
+            ['fake@name.com', 'Fake', 'Name']
+        ]).sql();
 
     // UPDATE
     // output: UPDATE users SET email = 'some@email.com', password = 'abcdefg', username = 'yoyo' WHERE id = 23
