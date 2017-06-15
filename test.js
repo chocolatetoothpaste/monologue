@@ -191,12 +191,12 @@ exports.select = function(test) {
 exports.insert = function(test) {
 	test.deepEqual(
 		mono({sort_keys: false}).insert( 'users', [
-			{ username: 'test', password: '1234', first_name: 'bob' },
-			{ password: 'abcd', username: 'geo23', first_name: "george" },
-			{ first_name: "rudy", password: 'sh1r3l1ng', username: 'rudedude' }
+			{ username: 'test', password: '1234', first_name: 'bob', type: 1 },
+			{ password: 'abcd', username: 'geo23', first_name: "george", type: 2 },
+			{ first_name: "rudy", password: 'sh1r3l1ng', username: 'rudedude', type: null }
 		] ).sql(),
-		"INSERT INTO `users` (`username`, `password`, `first_name`) "
-			+ "VALUES ('test', '1234', 'bob'),('geo23', 'abcd', 'george'),('rudedude', 'sh1r3l1ng', 'rudy')",
+		"INSERT INTO `users` (`username`, `password`, `first_name`, `type`) "
+			+ "VALUES ('test', '1234', 'bob', 1),('geo23', 'abcd', 'george', 2),('rudedude', 'sh1r3l1ng', 'rudy', NULL)",
 		"Multiple INSERTs"
 	);
 
@@ -222,7 +222,8 @@ exports.insert = function(test) {
 		"INSERT INTO `users` (`email`,`first_name`,`last_name`) VALUES "
 			+ "('test@user.com', 'Test', 'User'),"
 			+ "('example@sample.com', 'Sample', 'Person'),"
-			+ "('fake@name.com', 'Fake', 'Name')"
+			+ "('fake@name.com', 'Fake', 'Name')",
+		'Semantic Insert'
 	)
 
 	test.done();
@@ -234,14 +235,15 @@ exports.update = function(test) {
 			.update( "users", {
 				username: "yoyo",
 				email: 'some@email.com',
-				password: "abcdefg"
+				password: "abcdefg",
+				type: null
 			}).where({
 				id: 23,
 				cupcake: 'chocolate'
 			})
 			.sql(),
 		"UPDATE users SET username = 'yoyo', email = 'some@email.com', "
-			+ "password = 'abcdefg' WHERE id = 23 AND cupcake = 'chocolate'",
+			+ "password = 'abcdefg', type = NULL WHERE id = 23 AND cupcake = 'chocolate'",
 		"Simple UPDATE"
 	);
 

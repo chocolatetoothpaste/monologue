@@ -2,16 +2,14 @@
 "use strict";
 
 function condition(cond, sep = 'AND', part) {
-	// sep = ( typeof sep === "undefined" ? "AND" : sep );
 	sep = ( sep.length > 0 ? " " + sep + " " : sep );
 
 	if( cond instanceof Array && Object(cond[0]) === cond[0] ) {
-		cond.forEach((v, k, arr) => {
-			arr[k] = this.stringify( v ).join(' AND ');
-		});
+		cond = cond.map((v, k, arr) => {
+			return arr[k] = this.stringify( v ).join(' AND ');
+		}).join(' OR ');
 
 		// join an array of objects with OR
-		cond = cond.join(' OR ')
 		cond = `(${cond})`;
 	}
 
@@ -21,7 +19,7 @@ function condition(cond, sep = 'AND', part) {
 
 	else if( cond === Object(cond) ) {
 		// stringify the where statements
-		cond = this.stringify( cond ).join( sep );
+		cond = this.stringify( cond, '=', 'IS' ).join( sep );
 	}
 
 	part = ( part.length > 0 ? part + sep + cond : cond );
@@ -117,7 +115,7 @@ Monologue.prototype.join = function join( dir, tbl, stmt ) {
 	if( typeof stmt === 'undefined' ) {
 		stmt = tbl;
 		tbl = dir;
-		dir = "INNER";
+		dir = 'INNER';
 	}
 
 	if( this.opt.backquote ) {
@@ -172,7 +170,7 @@ Monologue.prototype.insert = function insert( tbl, p, d ) {
 
 	if( p instanceof Array && d instanceof Array ) {
 		p = this.backquote( p ).join(',');
-		var d = this.stringify( d, "");
+		var d = this.stringify( d, "", "");
 		// stringify should be refactored a bit so this isn't necessary
 		d.shift();
 		d = d.join(',');
@@ -187,7 +185,8 @@ Monologue.prototype.insert = function insert( tbl, p, d ) {
 			p = [p];
 		}
 
-		let a = this.stringify( p, "");
+		let a = this.stringify( p, "", "");
+
 		col = `(${a.shift()}) VALUES ${a.join(',')}`;
 	}
 
@@ -224,6 +223,10 @@ Monologue.prototype.update = function update( tbl, p ) {
 	this.parts.stmt = `UPDATE ${tbl} ${col}`;
 
 	return this;
+};
+
+Monologue.prototype.on_duplicate = function on_duplicate(tbl, p) {
+
 };
 
 
@@ -398,7 +401,7 @@ Monologue.prototype.not = function not(p, sep = 'AND') {
 	}
 
 	else if( Object(p) === p ) {
-		this.where( this.stringify(p, '!=').join(sep) );
+		this.where( this.stringify(p, '!=', 'IS NOT').join(sep) );
 	}
 
 	//*** not sure if these 2 blocks belong. they make queries read more
@@ -523,7 +526,7 @@ Monologue.prototype.explain = function explain() {
  * p: params, s: separator
  */
 
-Monologue.prototype.stringify = function stringify( p, s = '=', j = ', ' ) {
+Monologue.prototype.stringify = function stringify( p, s = '=', ns = '=', j = ', ' ) {
 	const c = [];
 
 	if( p instanceof Array ) {
@@ -547,7 +550,7 @@ Monologue.prototype.stringify = function stringify( p, s = '=', j = ', ' ) {
 					c.push( cols.join(j) );
 				}
 
-				let str = this.stringify( p[ii], "" ).join(j);
+				let str = this.stringify( p[ii], s, ns ).join(j);
 
 				c.push( `(${str})` );
 			}
@@ -573,7 +576,7 @@ Monologue.prototype.stringify = function stringify( p, s = '=', j = ', ' ) {
 		}
 
 		for( var jj = 0, len = col.length; jj < len; ++jj ) {
-			c.push( this.format( p[col[jj]], col[jj], s ) );
+			c.push( this.format( p[col[jj]], col[jj], s, ns ) );
 		}
 	}
 
@@ -585,7 +588,7 @@ Monologue.prototype.stringify = function stringify( p, s = '=', j = ', ' ) {
  * takes a key/value and formats it for use in a bound-param query
  */
 
-Monologue.prototype.format = function format( v, k = '', s ) {
+Monologue.prototype.format = function format( v, k = '', s, ns ) {
 	if( v instanceof Array ) {
 		let vesc = v.map( (v) => {
 			return this.escape(v);
@@ -605,9 +608,11 @@ Monologue.prototype.format = function format( v, k = '', s ) {
 		if( k && this.opt.backquote ) {
 			k = this.backquote(k);
 
-			if( v === 'NULL' && s ) {
-				s = ( s === '=' ? 'IS' : 'IS NOT' );
-			}
+			// if( v === 'NULL' && s ) {
+				// s = ( s === '=' ? 'IS' : 'IS NOT' );
+			// }
+			if( v === 'NULL' ) 
+				s = ns;
 		}
 
 		// if s and/or k is undefined, it is an array of values so just format

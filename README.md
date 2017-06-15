@@ -5,69 +5,6 @@ Monologue - Streamlined query building
 
 [Support Development](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=9KXDJTKMBPXTE)
 
-***NOTICE***
-
-Starting in version 0.8.0, Monologue will only be compatible with 4.latest and up to take advantage of ES6 features.  Do not upgrade if you are still using 0.12 or lower.
-
-***Breaking changes for 0.7.0***
-
-The API was reworked to clear up some annoyances and allow for free-hand queries to be written when a specific method does not exist. When a query is ready to be compiled, instead of calling `.query()` and referencing `.sql`, you simply call `.sql()`.  Example:
-
-    monologue()
-        .select( "*", "users u" )
-        .join( "posts p", "p.user_id = u.id" )
-        .where( { "category": "67" } )
-        .sql();
-
-The old method for compiling queries, `.query()`, has been repurposed for constructing queries that do not have a built in starter method (like `.select()`, `.insert()`, etc). These queries can be started like this:
-
-    monologue()
-        .query('SHOW TABLES FROM table')
-        .where({some: 'condition'})
-        .sql();
-
-No sanitization is performed as part of `.query()`, so use it carefully.  Subsequent methods will sanitize per their normal behavior.
-
-***New Feature***
-
-`.insert()` was updated in 0.7.4 to alternatively accept an array of columns and an array of arrays of values as separate arguments. (the old way still works too)
-Example:
-
-    monologue()
-        .insert( 'users', ['email', 'first_name', 'last_name'], [
-            ['test@user.com', 'Test', 'User'],
-            ['example@sample.com', 'Sample', 'Person'],
-            ['fake@name.com', 'Fake', 'Name']
-        ]).sql();
-
-`.select()` was updated in 0.7.1 to *optionally* accept a table name only, making '*' the implicit column selection.
-Example:
-
-    // 'SELECT * FROM `users` WHERE `email` = 'some@example.com'
-    monologue().select('users').where({email: 'some@example.com'}).sql()
-
-A new method was added in 0.7.0, taking advantage of the recent API changes. It's pretty self-explanatory:
-
-    // 'EXPLAIN SELECT * FROM `users` WHERE `email` = 'some@example.com'
-    monologue().select('*', 'users').where({email: 'some@example.com'}).explain()
-
-# API
-
-This area needs a ton of work.  You can get some great examples in the section by the same name.  For now, here's a quick rundown of `monologue().backquote()`:
-
-    // result: [ '`email`', '`password`', '`type`' ]
-    monologue().backquote(['email', 'password', 'type']);
-
-    // result: { '`pizza`': "hawaiin bbq chicken", '`drink`': "chocolate milk", '`dessert`': "german chocolate cake" }
-    monologue().backquote({
-        pizza: "hawaiin bbq chicken",
-        drink: "chocolate milk",
-        dessert: "german chocolate cake"
-    });
-
-    // result: '`cupcake`'
-    monologue().backquote('cupcake');
-
 # Examples
 
 *These are a little out of date due to recent changes but are pretty close to correct*
@@ -101,7 +38,6 @@ This area needs a ton of work.  You can get some great examples in the section b
         .limit( '300', 1000 )
         .sql();
 
-    console.log( mono.sql );
     // output: SELECT * FROM users WHERE id IN (1,2,3,4,5,6) AND date_time BETWEEN '2012-09-12' AND '2013-01-20' OR name LIKE 'ro%en' GROUP BY type, hamster ASC ORDER BY id ASC LIMIT 1000, 300
 
 
@@ -266,6 +202,6 @@ This area needs a ton of work.  You can get some great examples in the section b
 
     // SELECT sum(id) as count FROM comments HAVING count >= 42
     mono({backquote: false})
-        .select(['sum(id) as count'], 'comments')
+        .select('sum(id) as count', 'comments')
         .having('count').gte(42)
         .sql();
