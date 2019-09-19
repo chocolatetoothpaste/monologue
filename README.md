@@ -31,8 +31,6 @@ Monologue - Streamlined query building
         .sql()
 
     // Less than basic SELECT statement
-
-
     // call the SQL wrappers in any order, see below: where, group, where, order
 	// output: SELECT * FROM users WHERE id IN (1,2,3,4,5,6) AND date_time BETWEEN '2012-09-12' AND '2013-01-20' OR name LIKE 'ro%en' GROUP BY type, hamster ASC ORDER BY id ASC LIMIT 1000, 300
 
@@ -44,53 +42,6 @@ Monologue - Streamlined query building
         .or( "name" ).like("ro%en") // out of order, also passing "OR" as separator
         .order( "id" )
         .limit( '300', 1000 )
-        .sql();
-
-
-	// the different JOIN methods
-    mono().ljoin( table, statement ); // LEFT JOIN
-    mono().rjoin( table, statement ); // RIGHT JOIN
-    mono().lojoin( table, statement ); // LEFT OUTER JOIN
-    mono().rojoin( table, statement ); // RIGHT OUTER JOIN
-
-
-    // JOIN (default is inner):
-    // SELECT * FROM users u INNER JOIN posts p ON p.user_id = u.id WHERE category = '67'
-
-    monologue()
-        .select( "*", "users u" )
-        .join( "posts p", "p.user_id = u.id" )
-        .where( { "category": "67" } )
-        .sql();
-
-
-    // JOIN (LEFT, as argument):
-    // SELECT * FROM users u LEFT JOIN posts p ON p.user_id = u.id WHERE category = '67'
-
-    monologue()
-        .select( "*", "users u" )
-        .join( "LEFT", "posts p", { "p.user_id": "u.id" } )
-        .where( { "category": "67" } )
-        .sql();
-
-
-    // SELECT into outfile: the third param (OPTIONALLY ENCLOSED BY) is, as stated, optional. Just pass in the line ending and leave the 4th param out, the rest will be taken care of
-    // output: SELECT * FROM users WHERE company = 'general motors' INTO OUTFILE '/tmp/datafile' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' LINES TERMINATED BY '\n'
-
-    monologue()
-        .select( "*", "users" )
-        .where( { "company": "general motors" } )
-        .file( "/tmp/datafile", ",", '"', "\\n" )
-        .sql();
-
-
-    // SELECT into outfile: without third param
-    // output: SELECT * FROM users WHERE company = 'general motors' INTO OUTFILE '/tmp/datafile' FIELDS TERMINATED BY ','  LINES TERMINATED BY '\n'
-
-    monologue()
-        .select( "*", "users")
-        .where( { "company": "general motors" } )
-        .file( "/tmp/datafile", ",", "\\n" )
         .sql();
 
 
@@ -154,19 +105,6 @@ Monologue - Streamlined query building
         .delete( 'users', { username: 'test', password: '1234', first_name: "me" } )
         .sql();
 
-
-    // UNION
-    // Wrappers can be out of order BEFORE the UNION statement,
-    // wrappers after will be applied to the secondary statment
-    // output: SELECT username, email FROM users WHERE company_id = '1234' UNION SELECT screename, email_address FROM app_users WHERE company = 'coName'
-
-    monologue()
-        .select('username, email', 'users')
-        .where({"company_id": "1234"})
-        .union('screename, email_address', 'app_users')
-        .where({"company":"coName"})
-        .sql();
-
     // SELECT `username`, `password` FROM `users` WHERE id NOT IN (1,2,3,4)
     mono()
         .select(['username', 'password'], 'users')
@@ -225,3 +163,63 @@ Monologue - Streamlined query building
         .select('sum(id) as count', 'comments')
         .having('count').gte(42)
         .sql();
+
+
+	// the different JOIN methods
+    mono().ljoin( table, statement ); // LEFT JOIN
+    mono().rjoin( table, statement ); // RIGHT JOIN
+    mono().lojoin( table, statement ); // LEFT OUTER JOIN
+    mono().rojoin( table, statement ); // RIGHT OUTER JOIN
+
+
+    // JOIN (default is inner):
+    // SELECT * FROM users u INNER JOIN posts p ON p.user_id = u.id WHERE category = '67'
+
+    monologue()
+        .select( "*", "users u" )
+        .join( "posts p", "p.user_id = u.id" )
+        .where( { "category": "67" } )
+        .sql();
+
+
+    // JOIN (LEFT, as argument):
+    // SELECT * FROM users u LEFT JOIN posts p ON p.user_id = u.id WHERE category = '67'
+
+    monologue()
+        .select( "*", "users u" )
+        .join( "LEFT", "posts p", { "p.user_id": "u.id" } )
+        .where( { "category": "67" } )
+        .sql();
+
+
+    // UNION
+    // Wrappers can be out of order BEFORE the UNION statement,
+    // wrappers after will be applied to the secondary statment
+    // output: SELECT username, email FROM users WHERE company_id = '1234' UNION SELECT screename, email_address FROM app_users WHERE company = 'coName'
+
+    monologue()
+        .select('username, email', 'users')
+        .where({"company_id": "1234"})
+        .union('screename, email_address', 'app_users')
+        .where({"company":"coName"})
+        .sql();
+
+
+	// SELECT into outfile: the third param (OPTIONALLY ENCLOSED BY) is, as stated, optional. Just pass in the line ending and leave the 4th param out, the rest will be taken care of
+	// output: SELECT * FROM users WHERE company = 'general motors' INTO OUTFILE '/tmp/datafile' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' LINES TERMINATED BY '\n'
+
+	monologue()
+		.select( "*", "users" )
+		.where( { "company": "general motors" } )
+		.file( "/tmp/datafile", ",", '"', "\\n" )
+		.sql();
+
+
+	// SELECT into outfile: without third param
+	// output: SELECT * FROM users WHERE company = 'general motors' INTO OUTFILE '/tmp/datafile' FIELDS TERMINATED BY ','  LINES TERMINATED BY '\n'
+
+	monologue()
+		.select( "*", "users")
+		.where( { "company": "general motors" } )
+		.file( "/tmp/datafile", ",", "\\n" )
+		.sql();
