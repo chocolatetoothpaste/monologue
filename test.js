@@ -247,6 +247,43 @@ exports.update = function(test) {
 		"Simple UPDATE"
 	);
 
+	test.deepEqual(
+		mono({backquote: false})
+			.update( "comments", {
+				email: 'some@email.com',
+				comment: "Hello!"
+			}).set({
+				'timestamp': '123456789'
+			}).where({
+				id: 23
+			})
+			.sql(),
+
+		"UPDATE comments SET email = 'some@email.com', comment = 'Hello!', "
+			+ "timestamp = '123456789' WHERE id = 23",
+		"Update with .set() (additive)"
+	);
+
+	test.deepEqual(
+		mono({backquote: false})
+			.update( "files", {
+				name: 'MyFile.pdf',
+				path: "/path/to/myfile.pdf",
+				status: 1,
+				user_id: 23
+			}).set({
+				status: 0,
+				user_id: 45,
+				hidden: 1
+			}).where({
+				id: 867
+			})
+			.sql(),
+		"UPDATE files SET name = 'MyFile.pdf', path = '/path/to/myfile.pdf', "
+			+ "status = 0, user_id = 45, hidden = 1 WHERE id = 867",
+		"Update with .set() (additive/overwrite)"
+	);
+
 	test.done();
 };
 
@@ -438,7 +475,7 @@ exports.explain = function explain(test) {
 		mono().select('*', 'users').where({email: 'some@example.com'}).explain(),
 		'EXPLAIN SELECT * FROM `users` WHERE `email` = \'some@example.com\''
 	);
-	
+
 	test.done();
 };
 

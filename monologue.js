@@ -67,6 +67,8 @@ function Monologue(opt) {
 Monologue.prototype.reset = function reset() {
 	this.parts = {
 		stmt: '',
+		table: '',
+		sets: {},
 		sql: '',
 		join: [],
 		where: '',
@@ -79,10 +81,6 @@ Monologue.prototype.reset = function reset() {
 	};
 };
 
-
-
-/**
- */
 
 Monologue.prototype.select = function select( col, tbl ) {
 	if( typeof tbl === 'undefined' ) {
@@ -100,6 +98,7 @@ Monologue.prototype.select = function select( col, tbl ) {
 		col = col.join( ', ' );
 	}
 
+	this.parts.table = tbl;
 	this.parts.stmt = `SELECT ${col} FROM ${tbl}`;
 
 	return this;
@@ -173,9 +172,8 @@ Monologue.prototype.insert = function insert( tbl, p, d ) {
 		var d = this.stringify( d, "", "");
 		// stringify should be refactored a bit so this isn't necessary
 		d.shift();
-		d = d.join(',');
 
-		col = `(${p}) VALUES ${d}`;
+		col = `(${p}) VALUES (${d.join('),(')})`;
 	}
 
 	// Array is also an object
@@ -187,13 +185,15 @@ Monologue.prototype.insert = function insert( tbl, p, d ) {
 
 		let a = this.stringify( p, "", "");
 
-		col = `(${a.shift()}) VALUES ${a.join(',')}`;
+		// col = `(${a.shift()}) VALUES ${a.join(',')}`;
+		col = `(${a.shift()}) VALUES (${a.join('),(')})`;
 	}
 
 	else if( typeof p === "string" ) {
 		col = p;
 	}
 
+	this.parts.columns = col;
 	this.parts.stmt = `INSERT INTO ${tbl} ${col}`;
 
 	return this;
@@ -216,12 +216,38 @@ Monologue.prototype.update = function update( tbl, p ) {
 		col = `SET ${col}`;
 	}
 
-	else {
+	else if( typeof p === 'string' ) {
 		col = p;
 	}
+	else {
+		throw new Error('Params arg must be string or object');
+	}
 
+	this.parts.sets = p;
+	this.parts.table = tbl;
 	this.parts.stmt = `UPDATE ${tbl} ${col}`;
 
+	return this;
+};
+
+Monologue.prototype.set = function set(p) {
+	let col = '';
+
+	if( typeof p === 'object' ){//} && typeof this.parts.sets === 'object' ) {
+		let sets = {...this.parts.sets, ...p };
+
+		col = this.stringify( sets ).join( ', ' );
+		col = `SET ${col}`;
+
+		this.parts.sets = sets;
+	}
+	else if( typeof p === 'string' ) {
+		// this.parts.sets += `, ${p}`;
+		col = this.parts.sets;
+		// [ this.parts.sets, p ].join(', ');
+	}
+
+	this.parts.stmt = `UPDATE ${this.parts.table} ${col}`;
 	return this;
 };
 
@@ -233,7 +259,7 @@ Monologue.prototype.on_duplicate = function on_duplicate(tbl, p) {
 /**
  * Free-hand queries
  */
- 
+
 Monologue.prototype.query = function query(stmt) {
 	this.parts.stmt = stmt;
 
@@ -242,6 +268,7 @@ Monologue.prototype.query = function query(stmt) {
 
 
 /**
+ * Delete statements
  */
 
 Monologue.prototype.delete = function _delete( tbl, wh ) {
@@ -523,7 +550,7 @@ Monologue.prototype.explain = function explain() {
 
 /**
  * Takes an object or an array of objects and builds a SQL string
- * p: params, s: separator
+ * p: params, s: separator, ns: NULL seperator (IS/IS NOT), j: joiner
  */
 
 Monologue.prototype.stringify = function stringify( p, s = '=', ns = '=', j = ', ' ) {
@@ -552,7 +579,8 @@ Monologue.prototype.stringify = function stringify( p, s = '=', ns = '=', j = ',
 
 				let str = this.stringify( p[ii], s, ns ).join(j);
 
-				c.push( `(${str})` );
+				// c.push( `(${str})` );
+				c.push( `${str}` );
 			}
 
 			else {
@@ -611,7 +639,7 @@ Monologue.prototype.format = function format( v, k = '', s, ns ) {
 			// if( v === 'NULL' && s ) {
 				// s = ( s === '=' ? 'IS' : 'IS NOT' );
 			// }
-			if( v === 'NULL' ) 
+			if( v === 'NULL' )
 				s = ns;
 		}
 

@@ -5,9 +5,15 @@ Monologue - Streamlined query building
 
 [Support Development](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=9KXDJTKMBPXTE)
 
+# Updates
+
+### 0.9.0
+* Added .set() method for augmenting/overwriting SET statements when using UPDATE (INSERT coming soon)
+* Breaking change: stringify() no longer automatically encapsulates arrays with (). Must be done by hand now (improves consistency with stringify() on objects)
+
 # Examples
 
-*These are a little out of date due to recent changes but are pretty close to correct*
+*These may be slightly little out of date due to recent changes but are pretty close to correct. See test.js for some great examples*
 
 
     var monologue = require('monologue');
@@ -28,6 +34,8 @@ Monologue - Streamlined query building
 
 
     // call the SQL wrappers in any order, see below: where, group, where, order
+	// output: SELECT * FROM users WHERE id IN (1,2,3,4,5,6) AND date_time BETWEEN '2012-09-12' AND '2013-01-20' OR name LIKE 'ro%en' GROUP BY type, hamster ASC ORDER BY id ASC LIMIT 1000, 300
+
     var mono = monologue()
         .select( "*", "users")
         .where( { "id": [1,2,3,4,5,6] } ) // alternative to where("id").in([...])
@@ -38,9 +46,8 @@ Monologue - Streamlined query building
         .limit( '300', 1000 )
         .sql();
 
-    // output: SELECT * FROM users WHERE id IN (1,2,3,4,5,6) AND date_time BETWEEN '2012-09-12' AND '2013-01-20' OR name LIKE 'ro%en' GROUP BY type, hamster ASC ORDER BY id ASC LIMIT 1000, 300
 
-
+	// the different JOIN methods
     mono().ljoin( table, statement ); // LEFT JOIN
     mono().rjoin( table, statement ); // RIGHT JOIN
     mono().lojoin( table, statement ); // LEFT OUTER JOIN
@@ -69,7 +76,6 @@ Monologue - Streamlined query building
 
     // SELECT into outfile: the third param (OPTIONALLY ENCLOSED BY) is, as stated, optional. Just pass in the line ending and leave the 4th param out, the rest will be taken care of
     // output: SELECT * FROM users WHERE company = 'general motors' INTO OUTFILE '/tmp/datafile' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' LINES TERMINATED BY '\n'
-
 
     monologue()
         .select( "*", "users" )
@@ -118,6 +124,7 @@ Monologue - Streamlined query building
             ['fake@name.com', 'Fake', 'Name']
         ]).sql();
 
+
     // UPDATE
     // output: UPDATE users SET email = 'some@email.com', password = 'abcdefg', username = 'yoyo' WHERE id = 23
 
@@ -125,6 +132,19 @@ Monologue - Streamlined query building
         .update( "users", {username: "yoyo", email: 'some@email.com', password: "abcdefg"} )
         .where( {id: 23} )
         .sql();
+
+	// augment/overwrite previous SET statements! very handy for conditional cases
+
+	let query = monologue()
+		.update( "files", { name: 'MyFile.pdf', path: "/path/to/myfile.pdf", status: 1, user_id: 23 })
+		.where({ id: 867 })
+
+	if( someCondition ) {
+		query.set({ status: 0, user_id: 45, hidden: 1 })
+	}
+
+	// output: UPDATE `files` SET `name` = 'MyFile.pdf', `path` = '/path/to/myfile.pdf', `status` = 0, `user_id` = 45, `hidden` = 1 WHERE `id` = 867
+	update.sql()
 
 
     // DELETE
