@@ -226,6 +226,20 @@ exports.insert = function(test) {
 		'Semantic Insert'
 	)
 
+	test.deepEqual(
+		mono()
+			.insert( 'books', {
+				title: 'the big sky',
+				author: "a.b. guthrie",
+				year: '1947',
+				pages: 386
+			}).values(['Into the Wild', 'Jon Krakauer', '1997', 207])
+			.sql(),
+		"INSERT INTO `books` (`title`, `author`, `year`, `pages`) VALUES "
+			+ "('the big sky', 'a.b. guthrie', '1947', 386),"
+			+ "('Into the Wild','Jon Krakauer','1997',207)"
+	)
+
 	test.done();
 };
 
