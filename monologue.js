@@ -69,6 +69,7 @@ Monologue.prototype.reset = function reset() {
 		stmt: '',
 		table: '',
 		sets: {},
+		values: '',
 		sql: '',
 		join: [],
 		where: '',
@@ -169,11 +170,11 @@ Monologue.prototype.insert = function insert( tbl, p, d ) {
 
 	if( p instanceof Array && d instanceof Array ) {
 		p = this.backquote( p ).join(',');
-		var d = this.stringify( d, "", "");
+		var vals = this.stringify( d, "", "");
 		// stringify should be refactored a bit so this isn't necessary
-		d.shift();
+		vals.shift();
 
-		col = `(${p}) VALUES (${d.join('),(')})`;
+		col = `(${p}) VALUES (${vals.join('),(')})`;
 	}
 
 	// Array is also an object
@@ -183,19 +184,76 @@ Monologue.prototype.insert = function insert( tbl, p, d ) {
 			p = [p];
 		}
 
-		let a = this.stringify( p, "", "");
+		let vals = this.stringify( p, "", "");
 
 		// col = `(${a.shift()}) VALUES ${a.join(',')}`;
-		col = `(${a.shift()}) VALUES (${a.join('),(')})`;
+		col = `(${vals.shift()}) VALUES (${vals.join('),(')})`;
 	}
 
 	else if( typeof p === "string" ) {
 		col = p;
 	}
 
-	this.parts.columns = col;
+	this.parts.values = col;
+	this.parts.table = tbl;
 	this.parts.stmt = `INSERT INTO ${tbl} ${col}`;
 
+	return this;
+};
+
+Monologue.prototype.values = function update( p, d ) {
+	let col = '';
+	// if( p instanceof Array && d instanceof Array ) {
+	// 	p = this.backquote( p ).join(',');
+	// 	var vals = this.stringify( d, "", "");
+	// 	// stringify should be refactored a bit so this isn't necessary
+	// 	vals.shift();
+	//
+	// 	col = `(${vals.join('),(')})`;
+	// }
+	//
+	// // Array is also an object
+	// else if( typeof p === "object" ) {
+	// 	// if it's not a nested array, cheat and make it one
+	// 	if( ! ( p instanceof Array ) ) {
+	// 		p = [p];
+	// 	}
+	//
+	// 	let vals = this.stringify( p, "", "");
+	//
+	// 	// col = `(${a.shift()}) VALUES ${a.join(',')}`;
+	// 	col = `(${vals.join('),(')})`;
+	// }
+	// else if( typeof p === "string" ) {
+	// 	col = p;
+	// }
+
+	if( p instanceof Array ) {
+		// if it's not a nested array, cheat and make it one
+		// if( ! ( p instanceof Array ) ) {
+		// 	p = [p];
+		// }
+		//
+		let vals = this.stringify( p, "", "");
+
+		// col = `(${a.shift()}) VALUES ${a.join(',')}`;
+		if( p[0] instanceof Array ) {
+			vals.shift();
+			col = `(${vals.join('),(')})`;
+		}
+		else {
+			col = `(${vals.join(',')})`;
+		}
+
+	}
+	else if( typeof p === "string" ) {
+		col = p;
+	}
+
+	this.parts.values = [this.parts.values, col].filter(Boolean).join(',');
+	this.parts.stmt = `INSERT INTO ${this.parts.table} ${this.parts.values}`;
+
+// console.log(this.parts);
 	return this;
 };
 

@@ -7,6 +7,9 @@ Monologue - Streamlined query building
 
 # Updates
 
+### 0.9.1
+* Added .values() method for adding additional VALUES to INSERT statements
+
 ### 0.9.0
 * Added .set() method for augmenting/overwriting SET statements when using UPDATE (INSERT coming soon)
 * Breaking change: stringify() no longer automatically encapsulates arrays with (). Must be done by hand now (improves consistency with stringify() on objects)

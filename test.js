@@ -190,7 +190,7 @@ exports.select = function(test) {
 
 exports.insert = function(test) {
 	test.deepEqual(
-		mono({sort_keys: false}).insert( 'users', [
+		mono().insert( 'users', [
 			{ username: 'test', password: '1234', first_name: 'bob', type: 1 },
 			{ password: 'abcd', username: 'geo23', first_name: "george", type: 2 },
 			{ first_name: "rudy", password: 'sh1r3l1ng', username: 'rudedude', type: null }
@@ -201,15 +201,15 @@ exports.insert = function(test) {
 	);
 
 	test.deepEqual(
-		mono()
+		mono({sort_keys: true})
 			.insert( 'users', {
 				username: 'me',
-				password: 'abcd',
-				first_name: "cubert"
+				first_name: "cubert",
+				password: 'abcd'
 			}).sql(),
-		"INSERT INTO `users` (`username`, `password`, `first_name`) "
-			+ "VALUES ('me', 'abcd', 'cubert')",
-		"Single INSERT"
+		"INSERT INTO `users` (`first_name`, `password`, `username`) "
+			+ "VALUES ('cubert', 'abcd', 'me')",
+		"Single INSERT, sorting keys"
 	);
 
 	test.deepEqual(
