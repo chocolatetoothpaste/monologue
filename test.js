@@ -192,12 +192,12 @@ exports.insert = function(test) {
 	test.deepEqual(
 		mono().insert( 'users', [
 			{ username: 'test', password: '1234', first_name: 'bob', type: 1 },
-			{ password: 'abcd', username: 'geo23', first_name: "george", type: 2 },
+			{ type: 2, password: 'abcd', username: 'geo23', first_name: "george" },
 			{ first_name: "rudy", password: 'sh1r3l1ng', username: 'rudedude', type: null }
 		] ).sql(),
 		"INSERT INTO `users` (`username`, `password`, `first_name`, `type`) "
 			+ "VALUES ('test', '1234', 'bob', 1),('geo23', 'abcd', 'george', 2),('rudedude', 'sh1r3l1ng', 'rudy', NULL)",
-		"Multiple INSERTs"
+		"Multiple INSERTs, key order not consistent"
 	);
 
 	test.deepEqual(
@@ -223,7 +223,7 @@ exports.insert = function(test) {
 			+ "('test@user.com', 'Test', 'User'),"
 			+ "('example@sample.com', 'Sample', 'Person'),"
 			+ "('fake@name.com', 'Fake', 'Name')",
-		'Semantic Insert'
+		'Insert array of arrays, seperate column names'
 	)
 
 	test.deepEqual(
