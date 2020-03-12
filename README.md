@@ -7,6 +7,9 @@ Monologue - Streamlined query building
 
 # Updates
 
+### 0.9.2
+* Added .count, .sum(), .min(), and .max() for streamlining (and testing) aggregate fields in SELECT statements
+
 ### 0.9.1
 * Added .values() method for adding additional VALUES to INSERT statements
 

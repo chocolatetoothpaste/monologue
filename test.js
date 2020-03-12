@@ -117,6 +117,42 @@ exports.comparisons = function comparisons(test) {
 	test.done();
 };
 
+exports.functions = function(test) {
+
+	test.deepEqual(
+		mono().select("users").count('id')
+			.where( { "active": 1 } )
+			.sql(),
+		"SELECT *, COUNT(id) as count FROM `users` WHERE `active` = 1",
+		"SELECT with COUNT()"
+	);
+
+	test.deepEqual(
+		mono().select("orders").sum('quantity')
+			.where( { "status": "complete" } )
+			.sql(),
+		"SELECT *, SUM(quantity) as sum FROM `orders` WHERE `status` = 'complete'",
+		"SELECT with SUM()"
+	);
+
+	test.deepEqual(
+		mono().select("products").max('price')
+			.lte({"price": 100})
+			.sql(),
+		"SELECT *, MAX(price) as max FROM `products` WHERE `price` <= 100",
+		"SELECT with MAX()"
+	);
+
+	test.deepEqual(
+		mono().select("engines").min('horsepower')
+			.gte( { "torque": 300 } )
+			.sql(),
+		"SELECT *, MIN(horsepower) as min FROM `engines` WHERE `torque` >= 300",
+		"SELECT with MIN()"
+	);
+	test.done();
+}
+
 exports.select = function(test) {
 
 	test.deepEqual(

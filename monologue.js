@@ -67,6 +67,8 @@ function Monologue(opt) {
 Monologue.prototype.reset = function reset() {
 	this.parts = {
 		stmt: '',
+		select: [],
+		from: '',
 		table: '',
 		sets: {},
 		values: '',
@@ -92,7 +94,7 @@ Monologue.prototype.select = function select( col, tbl ) {
 	if( this.opt.backquote ) {
 		tbl = this.backquote(tbl);
 
-		if( col !== '*' ) col = this.backquote(col);
+		if( typeof col !== 'string' ) col = this.backquote(col);
 	}
 
 	if( col instanceof Array ) {
@@ -100,7 +102,49 @@ Monologue.prototype.select = function select( col, tbl ) {
 	}
 
 	this.parts.table = tbl;
-	this.parts.stmt = `SELECT ${col} FROM ${tbl}`;
+	this.parts.from = `FROM ${tbl}`;
+	this.parts.select.push(col);
+	this.parts.stmt = 'SELECT';
+
+	return this;
+};
+
+Monologue.prototype.count = function count( count, alias ) {
+	if( typeof alias === 'undefined' ) {
+		alias = 'count';
+	}
+
+	this.parts.select.push(`COUNT(${count}) as ${alias}`);
+
+	return this;
+};
+
+Monologue.prototype.sum = function sum( sum, alias ) {
+	if( typeof alias === 'undefined' ) {
+		alias = 'sum';
+	}
+
+	this.parts.select.push(`SUM(${sum}) as ${alias}`);
+
+	return this;
+};
+
+Monologue.prototype.min = function min( min, alias ) {
+	if( typeof alias === 'undefined' ) {
+		alias = 'min';
+	}
+
+	this.parts.select.push(`MIN(${min}) as ${alias}`);
+
+	return this;
+};
+
+Monologue.prototype.max = function max( max, alias ) {
+	if( typeof alias === 'undefined' ) {
+		alias = 'max';
+	}
+
+	this.parts.select.push(`MAX(${max}) as ${alias}`);
 
 	return this;
 };
@@ -170,7 +214,7 @@ Monologue.prototype.insert = function insert( tbl, p, d ) {
 
 	if( p instanceof Array && d instanceof Array ) {
 		p = this.backquote( p ).join(',');
-		var vals = this.stringify( d, "", "");
+		let vals = this.stringify( d, "", "");
 		// stringify should be refactored a bit so this isn't necessary
 		vals.shift();
 
@@ -575,28 +619,54 @@ Monologue.prototype.file = function file( f, t, e, l ) {
 Monologue.prototype.sql = function sql() {
 	// start from scratch each time this is called
 	this.parts.sql = this.parts.stmt;
+	let parts = [this.parts.stmt];
 
-	if( this.parts.join.length > 0 )
+	if( this.parts.select.length > 0 ) {
+		this.parts.sql += ' ' + this.parts.select.join(', ');
+		parts = parts.concat(this.parts.select.join(', '))
+	}
+
+	if( this.parts.from.length > 0 ) {
+		this.parts.sql += ' ' + this.parts.from;
+		parts = parts.concat(this.parts.from);
+	}
+
+	if( this.parts.join.length > 0 ) {
 		this.parts.sql += ' ' + this.parts.join.join(' ');
+		parts = parts.concat(this.parts.join.join(' '));
+	}
 
-	if( this.parts.where.length > 0 )
+	if( this.parts.where.length > 0 ) {
 		this.parts.sql += ' WHERE ' + this.parts.where;
+		parts = parts.concat('WHERE').concat(this.parts.where);
+	}
 
-	if( this.parts.group.length > 0 )
+	if( this.parts.group.length > 0 ) {
 		this.parts.sql += ' GROUP BY ' + this.parts.group.join(',');
+		parts = parts.concat('GROUP BY').concat(this.parts.group.join(','))
+	}
 
-	if( this.parts.having.length > 0 )
+	if( this.parts.having.length > 0 ) {
 		this.parts.sql += ' HAVING ' + this.parts.having;
+		parts = parts.concat('HAVING').concat(this.parts.having)
+	}
 
-	if( this.parts.order.length > 0 )
+	if( this.parts.order.length > 0 ) {
 		this.parts.sql += ' ORDER BY ' + this.parts.order.join(',');
+		parts = parts.concat('ORDER BY').concat(this.parts.order.join(','))
+	}
 
-	if( this.parts.limit.length > 0 )
+	if( this.parts.limit.length > 0 ) {
 		this.parts.sql += ' LIMIT ' + this.parts.limit;
+		parts = parts.concat('LIMIT').concat(this.parts.limit);
+	}
 
-	if( this.parts.last.length > 0 )
+	if( this.parts.last.length > 0 ) {
 		this.parts.sql += this.parts.last;
+		parts = parts.concat(this.parts.last);
+	}
 
+	console.log(parts.join(' '));
 	return this.parts.sql;
 };
 
