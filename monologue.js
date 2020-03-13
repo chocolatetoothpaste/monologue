@@ -666,7 +666,8 @@ Monologue.prototype.sql = function sql() {
 		parts = parts.concat(this.parts.last);
 	}
 
-	console.log(parts.join(' '));
+	// console.log(parts.join(' '));
+	// return parts.join(' ');
 	return this.parts.sql;
 };
 
